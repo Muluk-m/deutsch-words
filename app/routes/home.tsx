@@ -69,6 +69,38 @@ export default function Home() {
         {/* Learning Modes */}
         <div className="space-y-4">
           <Link
+            to="/units"
+            className="block bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl shadow-lg hover:shadow-xl transition-all p-6 text-white"
+          >
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 bg-white bg-opacity-20 rounded-full flex items-center justify-center text-2xl">
+                  📖
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold">分单元学习</h3>
+                  <p className="text-sm opacity-90">
+                    每单元100词，系统化学习进度
+                  </p>
+                </div>
+              </div>
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5l7 7-7 7"
+                />
+              </svg>
+            </div>
+          </Link>
+
+          <Link
             to="/learn"
             className="block bg-white rounded-xl shadow-md hover:shadow-xl transition-all p-6 border-2 border-transparent hover:border-blue-400"
           >
@@ -78,10 +110,8 @@ export default function Home() {
                   📚
                 </div>
                 <div>
-                  <h3 className="text-xl font-bold text-gray-800">顺序学习</h3>
-                  <p className="text-sm text-gray-600">
-                    按顺序学习新单词，支持发音和拼写
-                  </p>
+                  <h3 className="text-xl font-bold text-gray-800">连续学习</h3>
+                  <p className="text-sm text-gray-600">从当前进度继续学习</p>
                 </div>
               </div>
               <svg
