@@ -129,13 +129,20 @@ export default function Home() {
       <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-                Deutsch Wörter
-              </h1>
-              <p className="text-xs text-gray-500 dark:text-gray-400">
-                德语单词学习
-              </p>
+            <div className="flex items-center gap-3">
+              <img 
+                src="/logo.svg" 
+                alt="Deutsch Wörter Logo" 
+                className="w-11 h-11 rounded-xl shadow-md"
+              />
+              <div>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">
+                  Deutsch Wörter
+                </h1>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  德语单词学习
+                </p>
+              </div>
             </div>
             {mistakesCount > 0 && (
               <Link
