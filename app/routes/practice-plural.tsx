@@ -1,19 +1,29 @@
 import type { Route } from "./+types/practice-plural";
-import { Link } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
-import { PageContainer } from "../components/PageContainer";
-import { BackButton } from "../components/BackButton";
-import { AnswerInput } from "../components/AnswerInput";
-import { parseGermanWord, buildPluralForm } from "../utils/wordParser";
+import { parseGermanWord } from "../utils/wordParser";
 import { recordStudySession, saveTestResult } from "../utils/storageManager";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ListOrdered,
+  Trophy,
+  Home,
+  RotateCcw,
+  Lightbulb,
+  CheckCircle,
+  XCircle,
+  Sparkles,
+  SkipForward
+} from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "复数练习 - Deutsch Wörter" }];
 }
 
 export default function PracticePlural() {
-  const [allWords, setAllWords] = useState<Word[]>([]);
+  const navigate = useNavigate();
   const [pluralWords, setPluralWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -26,34 +36,24 @@ export default function PracticePlural() {
   const parsed = currentWord ? parseGermanWord(currentWord.word) : null;
   const correctPlural = parsed?.pluralWord;
 
-  // 初始化数据
   useEffect(() => {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
-        setAllWords(data);
-
-        // 只选择有复数形式的名词
-        const wordsWithPlural = data.filter(w => {
+        const wordsWithPlural = data.filter((w) => {
           const p = parseGermanWord(w.word);
-          return p.plural && p.plural !== '-' && !p.note?.includes('nur Sg');
+          return p.plural && p.plural !== "-" && !p.note?.includes("nur Sg");
         });
-
-        // 随机打乱并选择40个
         const shuffled = [...wordsWithPlural].sort(() => Math.random() - 0.5);
-        const selected = shuffled.slice(0, 40);
-        setPluralWords(selected);
+        setPluralWords(shuffled.slice(0, 40));
       });
   }, []);
 
   const handleCheckAnswer = () => {
     if (!correctPlural) return;
-
-    // 检查答案（忽略大小写，忽略前面的 die）
     const normalized = userInput.trim().toLowerCase();
     const correctNormalized = correctPlural.toLowerCase();
     const correctWithDie = `die ${correctPlural}`.toLowerCase();
-
     const correct = normalized === correctNormalized || normalized === correctWithDie;
     setIsCorrect(correct);
 
@@ -73,10 +73,9 @@ export default function PracticePlural() {
       setIsCorrect(null);
       setShowHint(false);
     } else {
-      // 练习完成
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
       saveTestResult({
-        mode: 'plural',
+        mode: "plural",
         date: new Date().toISOString(),
         correct: score.correct + (isCorrect ? 1 : 0),
         total: score.total + 1,
@@ -93,12 +92,10 @@ export default function PracticePlural() {
     recordStudySession(false);
   };
 
-  const getHint = () => {
-    if (!parsed || !parsed.plural) return '';
-    return `变化规则：${parsed.plural}`;
-  };
+  const getHint = () => (!parsed || !parsed.plural ? "" : `变化规则：${parsed.plural}`);
+  const progress = pluralWords.length > 0 ? ((currentIndex + 1) / pluralWords.length) * 100 : 0;
 
-  // 练习完成
+  // Completion State
   if (currentIndex >= pluralWords.length && pluralWords.length > 0) {
     const accuracy = Math.round((score.correct / score.total) * 100);
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
@@ -106,223 +103,231 @@ export default function PracticePlural() {
     const seconds = timeSpent % 60;
 
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">
-            {accuracy >= 90 ? '🏆' : accuracy >= 70 ? '🎉' : '💪'}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <button onClick={() => navigate("/")} className="p-2 -ml-2 text-gray-500 cursor-pointer">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">练习完成</h1>
+            <div className="w-10" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            复数练习完成！
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+            accuracy >= 90 ? "bg-gradient-to-br from-yellow-400 to-amber-500" :
+            accuracy >= 70 ? "bg-gradient-to-br from-teal-400 to-cyan-500" :
+            "bg-gradient-to-br from-orange-400 to-red-500"
+          }`}>
+            <Trophy className="w-12 h-12 text-white" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {accuracy >= 90 ? "优秀！" : accuracy >= 70 ? "不错！" : "继续加油！"}
           </h2>
-          <p className="text-gray-600 mb-6">
-            {accuracy >= 90
-              ? '优秀！你对德语复数规则掌握得很好！'
-              : accuracy >= 70
-              ? '不错！继续练习！'
-              : '加油！复数变化需要多练习！'}
-          </p>
+          <p className="text-gray-500 dark:text-gray-400 mb-8">复数变化掌握得更好了</p>
 
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-green-600">
-                {score.correct}
-              </div>
-              <div className="text-sm text-gray-600">正确</div>
+          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-green-600">{score.correct}</div>
+              <div className="text-xs text-gray-500 mt-1">正确</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-red-600">
-                {score.total - score.correct}
-              </div>
-              <div className="text-sm text-gray-600">错误</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-red-600">{score.total - score.correct}</div>
+              <div className="text-xs text-gray-500 mt-1">错误</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-blue-600">
-                {accuracy}%
-              </div>
-              <div className="text-sm text-gray-600">正确率</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-blue-600">{accuracy}%</div>
+              <div className="text-xs text-gray-500 mt-1">正确率</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-purple-600">
-                {minutes}:{seconds.toString().padStart(2, '0')}
-              </div>
-              <div className="text-sm text-gray-600">用时</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-purple-600">{minutes}:{seconds.toString().padStart(2, "0")}</div>
+              <div className="text-xs text-gray-500 mt-1">用时</div>
             </div>
           </div>
 
-          <div className="flex gap-3 justify-center">
-            <Link
-              to="/"
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-            >
-              返回首页
-            </Link>
-            <button
-              onClick={() => window.location.reload()}
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
-            >
+          <div className="flex flex-col gap-3 w-full max-w-xs">
+            <button onClick={() => window.location.reload()} className="flex items-center justify-center gap-2 py-4 bg-teal-600 text-white rounded-2xl font-semibold cursor-pointer">
+              <RotateCcw className="w-5 h-5" />
               再练一次
             </button>
+            <Link to="/" className="flex items-center justify-center gap-2 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium cursor-pointer">
+              <Home className="w-5 h-5" />
+              返回首页
+            </Link>
           </div>
-        </div>
-      </PageContainer>
+        </main>
+      </div>
     );
   }
 
-  // 加载中
+  // Loading State
   if (!currentWord || !parsed || !correctPlural) {
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-gray-600">准备中...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-teal-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">准备中...</p>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   return (
-    <PageContainer>
-      <BackButton />
-
-      {/* 进度条 */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>
-            进度: {currentIndex + 1} / {pluralWords.length}
-          </span>
-          <span>
-            正确率: {score.total > 0 ? Math.round((score.correct / score.total) * 100) : 0}%
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-teal-500 h-2 rounded-full transition-all"
-            style={{ width: `${((currentIndex + 1) / pluralWords.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* 主内容区域 */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-        {/* 题目 */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">🔢</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            写出复数形式
-          </h2>
-          
-          {/* 单数形式 */}
-          <div className="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-8 mb-4">
-            <div className="text-sm text-gray-600 mb-2">单数：</div>
-            <div className="text-4xl font-bold text-gray-800 mb-3">
-              {currentWord.word}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 cursor-pointer">
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+              {currentIndex + 1} / {pluralWords.length}
             </div>
-            <div className="text-lg text-gray-600">
-              {currentWord.zh_cn}
-            </div>
+            {score.total > 0 && (
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                (score.correct / score.total) >= 0.8 ? "bg-green-100 text-green-600" :
+                (score.correct / score.total) >= 0.6 ? "bg-orange-100 text-orange-600" :
+                "bg-red-100 text-red-600"
+              }`}>
+                {Math.round((score.correct / score.total) * 100)}%
+              </div>
+            )}
+            {score.total === 0 && <div className="w-10" />}
+          </div>
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="h-full bg-gradient-to-r from-teal-500 to-cyan-500 rounded-full transition-all" style={{ width: `${progress}%` }} />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 py-6">
+        {/* Question Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 mb-6 text-center">
+          <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ListOrdered className="w-8 h-8 text-teal-600 dark:text-teal-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-4">写出复数形式</h2>
+
+          {/* Singular Word */}
+          <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-6 mb-4">
+            <p className="text-xs text-teal-600 dark:text-teal-400 font-medium mb-2">单数：</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">{currentWord.word}</p>
+            <p className="text-gray-600 dark:text-gray-400">{currentWord.zh_cn}</p>
           </div>
 
-          {/* 显示提示 */}
+          {/* Hint */}
           {showHint && (
-            <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 mb-4">
-              <p className="text-yellow-800 font-medium">
-                💡 {getHint()}
-              </p>
+            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4 mb-4">
+              <div className="flex items-center gap-2 justify-center text-amber-700 dark:text-amber-400">
+                <Lightbulb className="w-4 h-4" />
+                <span className="font-medium">{getHint()}</span>
+              </div>
             </div>
           )}
         </div>
 
-        {/* 答题区域 */}
-        {isCorrect === null ? (
-          <>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                输入复数形式（可以不加 die）：
-              </label>
-              <AnswerInput
-                value={userInput}
-                onChange={setUserInput}
-                onSubmit={handleCheckAnswer}
-                onSkip={handleSkip}
-                disabled={false}
-                placeholder="例如：Bücher 或 die Bücher"
-                autoFocus
-              />
-            </div>
-            <div className="flex gap-2 justify-center">
-              <button
-                onClick={() => setShowHint(!showHint)}
-                className="text-sm text-gray-600 hover:text-blue-600 transition-colors"
-              >
-                {showHint ? '隐藏提示' : '💡 显示提示'}
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {/* 结果显示 */}
-            <div className={`rounded-xl p-6 mb-6 ${
-              isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'
+        {/* Answer Section */}
+        <div className="flex-1 flex flex-col">
+          {isCorrect === null ? (
+            <>
+              <div className="mb-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">输入复数形式（可以不加 die）：</p>
+                <input
+                  type="text"
+                  value={userInput}
+                  onChange={(e) => setUserInput(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && userInput.trim() && handleCheckAnswer()}
+                  placeholder="例如：Bücher 或 die Bücher"
+                  autoFocus
+                  className="w-full h-14 px-4 text-center text-xl font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-teal-500 rounded-2xl outline-none transition-all"
+                />
+              </div>
+              <div className="flex gap-4 justify-center text-sm mt-2">
+                <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-1 text-gray-500 hover:text-teal-600 cursor-pointer">
+                  <Lightbulb className="w-4 h-4" />
+                  {showHint ? "隐藏提示" : "显示提示"}
+                </button>
+                <button onClick={handleSkip} className="flex items-center gap-1 text-gray-500 hover:text-orange-600 cursor-pointer">
+                  <SkipForward className="w-4 h-4" />
+                  跳过
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className={`p-4 rounded-2xl mb-4 ${
+              isCorrect ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800" : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
             }`}>
-              <div className="text-center mb-4">
-                <div className="text-5xl mb-2">{isCorrect ? '✓' : '✗'}</div>
-                <div className={`text-2xl font-bold mb-4 ${isCorrect ? 'text-green-700' : 'text-red-700'}`}>
-                  {isCorrect ? '正确！' : '错误！'}
+              <div className="flex items-center gap-3 mb-3">
+                {isCorrect ? <CheckCircle className="w-8 h-8 text-green-500" /> : <XCircle className="w-8 h-8 text-red-500" />}
+                <div>
+                  <p className={`font-semibold ${isCorrect ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"}`}>
+                    {isCorrect ? "正确！" : "错误"}
+                  </p>
                 </div>
               </div>
-              
-              <div className="space-y-3">
-                <div className="bg-white rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">正确答案：</div>
-                  <div className="text-2xl font-bold text-gray-800">
-                    die {correctPlural}
-                  </div>
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-2">
+                <p className="text-sm text-gray-500 mb-1">正确答案：</p>
+                <p className="text-xl font-bold text-gray-900 dark:text-gray-100">die {correctPlural}</p>
+              </div>
+              {!isCorrect && userInput && (
+                <div className="bg-white dark:bg-gray-800 rounded-xl p-4 mb-2">
+                  <p className="text-sm text-gray-500 mb-1">你的答案：</p>
+                  <p className="text-lg text-red-600">{userInput}</p>
                 </div>
-                
-                {!isCorrect && userInput && (
-                  <div className="bg-white rounded-lg p-4">
-                    <div className="text-sm text-gray-600 mb-1">你的答案：</div>
-                    <div className="text-xl text-red-600 font-mono">
-                      {userInput}
-                    </div>
-                  </div>
-                )}
-
-                <div className="bg-white rounded-lg p-4">
-                  <div className="text-sm text-gray-600 mb-1">变化规则：</div>
-                  <div className="text-lg text-gray-800">
-                    {parsed.word} <span className="text-blue-600 font-bold">+ {parsed.plural}</span> = {correctPlural}
-                  </div>
-                </div>
+              )}
+              <div className="bg-white dark:bg-gray-800 rounded-xl p-4">
+                <p className="text-sm text-gray-500 mb-1">变化规则：</p>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {parsed.word} <span className="text-teal-600 font-bold">+ {parsed.plural}</span> = {correctPlural}
+                </p>
               </div>
             </div>
+          )}
+        </div>
+      </main>
 
-            {/* 下一题按钮 */}
-            <div className="text-center">
-              <button
-                onClick={handleNext}
-                className="bg-teal-500 text-white px-8 py-3 rounded-lg font-medium hover:bg-teal-600 transition-colors"
-              >
-                {currentIndex < pluralWords.length - 1 ? '下一题 →' : '查看结果'}
-              </button>
+      {/* Footer */}
+      {isCorrect === null ? (
+        <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800">
+          <div className="px-4 py-3">
+            <button
+              onClick={handleCheckAnswer}
+              disabled={!userInput.trim()}
+              className="w-full flex items-center justify-center gap-2 py-4 bg-teal-600 text-white rounded-2xl font-semibold disabled:opacity-40 cursor-pointer"
+            >
+              <Sparkles className="w-5 h-5" />
+              检查答案
+            </button>
+          </div>
+        </footer>
+      ) : (
+        <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800">
+          <div className="px-4 py-3">
+            <button onClick={handleNext} className="w-full flex items-center justify-center gap-2 py-4 bg-teal-600 text-white rounded-2xl font-semibold cursor-pointer">
+              {currentIndex < pluralWords.length - 1 ? "下一题" : "查看结果"}
+              <ChevronRight className="w-5 h-5" />
+            </button>
+          </div>
+        </footer>
+      )}
+
+      {/* Tips */}
+      <div className="px-4 pb-4 safe-area-bottom">
+        <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4">
+          <div className="flex items-start gap-2">
+            <Lightbulb className="w-4 h-4 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+            <div className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
+              <p><span className="font-bold">-e</span>: 加 -e（Tag → Tage）</p>
+              <p><span className="font-bold">-er</span>: 加 -er（Kind → Kinder）</p>
+              <p><span className="font-bold">¨-e</span>: 元音变音 + 加后缀（Buch → Bücher）</p>
             </div>
-          </>
-        )}
-      </div>
-
-      {/* 复数规则提示 */}
-      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl shadow-md p-6">
-        <h3 className="text-lg font-bold text-gray-800 mb-3">💡 常见复数规则</h3>
-        <div className="text-sm text-gray-700 space-y-2">
-          <p>• <span className="font-bold">-e</span>: 加 -e（如 Tag → Tage）</p>
-          <p>• <span className="font-bold">-er</span>: 加 -er（如 Kind → Kinder）</p>
-          <p>• <span className="font-bold">-en/-n</span>: 加 -en 或 -n（如 Frau → Frauen）</p>
-          <p>• <span className="font-bold">¨-e/¨-er</span>: 元音变音 + 加后缀（如 Buch → Bücher）</p>
-          <p>• <span className="font-bold">-s</span>: 加 -s（多为外来词，如 Auto → Autos）</p>
+          </div>
         </div>
       </div>
-    </PageContainer>
+    </div>
   );
 }
-

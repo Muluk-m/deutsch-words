@@ -4,11 +4,7 @@ import { useState, useEffect } from "react";
 import type { Word, WordSRSProgress } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
-import { PageContainer } from "../components/PageContainer";
-import { BackButton } from "../components/BackButton";
-import { PronunciationButtons } from "../components/PronunciationButtons";
-import { AnswerInput } from "../components/AnswerInput";
-import { AnswerFeedback } from "../components/AnswerFeedback";
+import { usePronunciation } from "../hooks/usePronunciation";
 import {
   getSRSProgress,
   updateWordSRSProgress,
@@ -17,7 +13,27 @@ import {
   needsMigration,
   migrateData,
 } from "../utils/storageManager";
-import { getDueWords, updateSRSProgress, formatNextReview } from "../utils/srsAlgorithm";
+import {
+  getDueWords,
+  updateSRSProgress,
+  formatNextReview,
+} from "../utils/srsAlgorithm";
+import {
+  ChevronLeft,
+  Home,
+  Trophy,
+  Volume2,
+  SkipForward,
+  CheckCircle,
+  XCircle,
+  Sparkles,
+  RotateCcw,
+  Brain,
+  Frown,
+  Meh,
+  Smile,
+  Laugh,
+} from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "智能复习 - Deutsch Wörter" }];
@@ -44,70 +60,40 @@ export default function SRSReview() {
     currentWord?.word || "",
     currentWord?.phonetic
   );
+  const { pronounce } = usePronunciation();
 
-  // 初始化数据
   useEffect(() => {
-    // 检查是否需要迁移旧数据
-    if (needsMigration()) {
-      migrateData();
-    }
+    if (needsMigration()) migrateData();
 
-    // 加载单词数据
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
         setAllWords(data);
-
-        // 获取到期单词
         const srsProgress = getSRSProgress();
         const due = getDueWords(srsProgress);
         setDueWords(due);
-
-        if (due.length === 0) {
-          // 没有到期单词
-        }
       });
   }, []);
 
   const handleCheckAnswer = () => {
     if (!currentWord) return;
-
     const correct = checkAnswer(userInput, currentWord.word);
     setIsCorrect(correct);
-
-    if (!correct) {
-      // 记录错误
-      addMistake(currentWord.word, userInput, currentWord.zh_cn);
-    }
-
-    // 答题后显示质量评分界面
+    if (!correct) addMistake(currentWord.word, userInput, currentWord.zh_cn);
     setShowQualityRating(true);
   };
 
   const handleQualityRating = (quality: number) => {
     if (!currentProgress) return;
-
-    // 根据答案正确性调整质量分数
     let adjustedQuality = quality;
-    if (!isCorrect && quality >= 3) {
-      // 如果答错但评分为 Good/Easy，自动降低为 Hard
-      adjustedQuality = Math.min(quality, 2);
-    }
+    if (!isCorrect && quality >= 3) adjustedQuality = Math.min(quality, 2);
 
-    // 更新 SRS 进度
     const newProgress = updateSRSProgress(currentProgress, adjustedQuality);
     updateWordSRSProgress(newProgress);
-
-    // 记录统计
     recordStudySession(isCorrect || false);
 
-    // 更新计数
     setReviewedCount(reviewedCount + 1);
-    if (isCorrect) {
-      setCorrectCount(correctCount + 1);
-    }
-
-    // 进入下一个单词
+    if (isCorrect) setCorrectCount(correctCount + 1);
     handleNext();
   };
 
@@ -118,238 +104,350 @@ export default function SRSReview() {
       setIsCorrect(null);
       setShowQualityRating(false);
     } else {
-      // 全部复习完成
-      setCurrentIndex(currentIndex + 1); // 触发完成状态
+      setCurrentIndex(currentIndex + 1);
     }
   };
 
   const handleSkip = () => {
     if (!currentProgress) return;
-
-    // 跳过等同于"困难"评分
     const newProgress = updateSRSProgress(currentProgress, 1);
     updateWordSRSProgress(newProgress);
-
     handleNext();
   };
 
-  // 没有到期单词
+  const progress =
+    dueWords.length > 0 ? ((currentIndex + 1) / dueWords.length) * 100 : 0;
+
+  // Empty State
   if (allWords.length > 0 && dueWords.length === 0) {
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎉</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 text-gray-500 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              智能复习
+            </h1>
+            <div className="w-10" />
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-4">
+          <div className="w-20 h-20 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mb-6">
+            <Trophy className="w-10 h-10 text-green-600 dark:text-green-400" />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             太棒了！
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 text-center mb-8">
             暂时没有需要复习的单词
           </p>
           <Link
             to="/"
-            className="inline-block bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
+            className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-xl font-medium cursor-pointer"
           >
+            <Home className="w-5 h-5" />
             返回首页
           </Link>
-        </div>
-      </PageContainer>
+        </main>
+      </div>
     );
   }
 
-  // 复习完成
+  // Completion State
   if (currentIndex >= dueWords.length && dueWords.length > 0) {
-    const accuracy = reviewedCount > 0
-      ? Math.round((correctCount / reviewedCount) * 100)
-      : 0;
+    const accuracy =
+      reviewedCount > 0 ? Math.round((correctCount / reviewedCount) * 100) : 0;
 
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">🎊</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => navigate("/")}
+              className="p-2 -ml-2 text-gray-500 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              复习完成
+            </h1>
+            <div className="w-10" />
+          </div>
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+          <div className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center mb-6">
+            <Trophy className="w-12 h-12 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             复习完成！
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
             今天的复习任务已完成
           </p>
 
-          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-4">
+          <div className="grid grid-cols-3 gap-4 w-full max-w-xs mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
               <div className="text-2xl font-bold text-blue-600">
                 {reviewedCount}
               </div>
-              <div className="text-sm text-gray-600">已复习</div>
+              <div className="text-xs text-gray-500 mt-1">已复习</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
               <div className="text-2xl font-bold text-green-600">
                 {correctCount}
               </div>
-              <div className="text-sm text-gray-600">正确</div>
+              <div className="text-xs text-gray-500 mt-1">正确</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
               <div className="text-2xl font-bold text-purple-600">
                 {accuracy}%
               </div>
-              <div className="text-sm text-gray-600">正确率</div>
+              <div className="text-xs text-gray-500 mt-1">正确率</div>
             </div>
           </div>
 
-          <div className="flex gap-3 justify-center">
-            <Link
-              to="/"
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-            >
-              返回首页
-            </Link>
+          <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
               onClick={() => window.location.reload()}
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              className="flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-2xl font-semibold cursor-pointer"
             >
+              <RotateCcw className="w-5 h-5" />
               继续复习
             </button>
+            <Link
+              to="/"
+              className="flex items-center justify-center gap-2 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium cursor-pointer"
+            >
+              <Home className="w-5 h-5" />
+              返回首页
+            </Link>
           </div>
-        </div>
-      </PageContainer>
+        </main>
+      </div>
     );
   }
 
-  // 加载中
+  // Loading State
   if (!currentWord) {
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-gray-600">加载中...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500">加载中...</p>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   return (
-    <PageContainer>
-      <BackButton />
-
-      {/* 进度条 */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>
-            复习进度: {currentIndex + 1} / {dueWords.length}
-          </span>
-          <span>正确率: {reviewedCount > 0 ? Math.round((correctCount / reviewedCount) * 100) : 0}%</span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-blue-500 h-2 rounded-full transition-all"
-            style={{ width: `${((currentIndex + 1) / dueWords.length) * 100}%` }}
-          />
-        </div>
-      </div>
-
-      {/* SRS 信息 */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-        <div className="flex items-center justify-between text-sm">
-          <div className="text-gray-600">
-            <span className="font-medium">熟练度:</span> {currentProgress.repetitions} 次
-          </div>
-          <div className="text-gray-600">
-            <span className="font-medium">间隔:</span> {currentProgress.interval} 天
-          </div>
-          <div className="text-blue-600 font-medium">
-            {formatNextReview(currentProgress.nextReview)}
-          </div>
-        </div>
-      </div>
-
-      {/* 主内容区域 */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-        {/* 中文释义 */}
-        <div className="text-center mb-8">
-          <div className="text-gray-500 text-sm mb-2">请输入德语单词</div>
-          <div className="text-3xl font-bold text-gray-800 mb-4">
-            {currentWord.zh_cn}
-          </div>
-
-          {/* 发音按钮 */}
-          {!showQualityRating && (
-            <PronunciationButtons
-              word={currentWord.word}
-              phonetic={phonetic}
-              onPronounce={() => {}}
-            />
-          )}
-        </div>
-
-        {/* 答题区域 */}
-        {!showQualityRating ? (
-          <AnswerInput
-            value={userInput}
-            onChange={setUserInput}
-            onSubmit={handleCheckAnswer}
-            onSkip={handleSkip}
-            disabled={isCorrect !== null}
-            placeholder="输入德语单词..."
-          />
-        ) : (
-          <>
-            {/* 显示答案 */}
-            <div className="mb-6">
-              <AnswerFeedback
-                isCorrect={isCorrect || false}
-                correctAnswer={currentWord.word}
-                userAnswer={userInput}
-                phonetic={phonetic}
-              />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 text-gray-500 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <div className="text-center">
+              <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                {currentIndex + 1} / {dueWords.length}
+              </div>
             </div>
+            {reviewedCount > 0 ? (
+              <div className="px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full text-xs font-medium">
+                {Math.round((correctCount / reviewedCount) * 100)}%
+              </div>
+            ) : (
+              <div className="w-10" />
+            )}
+          </div>
 
-            {/* 质量评分 */}
-            <div className="border-t pt-6">
-              <h3 className="text-center text-lg font-bold text-gray-800 mb-4">
-                这个单词对你来说有多难？
-              </h3>
-              <div className="grid grid-cols-2 gap-3">
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 py-6">
+        {/* SRS Info */}
+        <div className="flex items-center justify-center gap-4 mb-4 text-xs text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-1">
+            <Brain className="w-4 h-4" />
+            <span>熟练度 {currentProgress.repetitions}</span>
+          </div>
+          <div>间隔 {currentProgress.interval}天</div>
+        </div>
+
+        {!showQualityRating ? (
+          /* Question View */
+          <div className="flex-1 flex flex-col">
+            {/* Question Card */}
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 mb-6">
+              <p className="text-xs text-blue-600 dark:text-blue-400 font-medium text-center mb-2">
+                请输入德语单词
+              </p>
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 text-center mb-4">
+                {currentWord.zh_cn}
+              </h2>
+
+              <div className="flex justify-center">
                 <button
-                  onClick={() => handleQualityRating(0)}
-                  className="bg-red-50 text-red-700 py-4 px-4 rounded-lg font-medium hover:bg-red-100 transition-colors border-2 border-red-200"
+                  onClick={() => pronounce(currentWord.word)}
+                  className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50 active:scale-90"
                 >
-                  <div className="text-lg font-bold">😵 完全忘了</div>
-                  <div className="text-sm opacity-75">Again - 1分钟后</div>
-                </button>
-                <button
-                  onClick={() => handleQualityRating(2)}
-                  className="bg-orange-50 text-orange-700 py-4 px-4 rounded-lg font-medium hover:bg-orange-100 transition-colors border-2 border-orange-200"
-                >
-                  <div className="text-lg font-bold">🤔 有点难</div>
-                  <div className="text-sm opacity-75">Hard - 1天后</div>
-                </button>
-                <button
-                  onClick={() => handleQualityRating(4)}
-                  className="bg-green-50 text-green-700 py-4 px-4 rounded-lg font-medium hover:bg-green-100 transition-colors border-2 border-green-200"
-                >
-                  <div className="text-lg font-bold">👍 还不错</div>
-                  <div className="text-sm opacity-75">Good - 正常间隔</div>
-                </button>
-                <button
-                  onClick={() => handleQualityRating(5)}
-                  className="bg-blue-50 text-blue-700 py-4 px-4 rounded-lg font-medium hover:bg-blue-100 transition-colors border-2 border-blue-200"
-                >
-                  <div className="text-lg font-bold">😄 很简单</div>
-                  <div className="text-sm opacity-75">Easy - 延长间隔</div>
+                  <Volume2 className="w-5 h-5" />
                 </button>
               </div>
             </div>
-          </>
-        )}
-      </div>
 
-      {/* 提示信息 */}
-      {!showQualityRating && (
-        <div className="text-center text-sm text-gray-500">
-          💡 提示：根据难度评分，系统会智能安排下次复习时间
-        </div>
-      )}
-    </PageContainer>
+            {/* Input */}
+            <div className="flex-1 flex flex-col justify-center">
+              <input
+                type="text"
+                value={userInput}
+                onChange={(e) => setUserInput(e.target.value)}
+                onKeyPress={(e) =>
+                  e.key === "Enter" && userInput.trim() && handleCheckAnswer()
+                }
+                placeholder="输入德语单词..."
+                autoFocus
+                className="w-full h-14 px-4 text-center text-xl font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 dark:focus:border-blue-400 rounded-2xl outline-none transition-all"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSkip}
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium cursor-pointer"
+              >
+                <SkipForward className="w-5 h-5" />
+                跳过
+              </button>
+              <button
+                onClick={handleCheckAnswer}
+                disabled={!userInput.trim()}
+                className="flex-1 flex items-center justify-center gap-2 py-4 bg-blue-600 text-white rounded-2xl font-semibold disabled:opacity-40 cursor-pointer"
+              >
+                <Sparkles className="w-5 h-5" />
+                检查
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Answer & Rating View */
+          <div className="flex-1 flex flex-col">
+            {/* Feedback */}
+            <div
+              className={`p-4 rounded-2xl mb-6 ${
+                isCorrect
+                  ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                  : "bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                {isCorrect ? (
+                  <CheckCircle className="w-8 h-8 text-green-500 flex-shrink-0" />
+                ) : (
+                  <XCircle className="w-8 h-8 text-red-500 flex-shrink-0" />
+                )}
+                <div>
+                  <p
+                    className={`font-semibold ${
+                      isCorrect
+                        ? "text-green-700 dark:text-green-400"
+                        : "text-red-700 dark:text-red-400"
+                    }`}
+                  >
+                    {isCorrect ? "回答正确！" : "回答错误"}
+                  </p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    正确答案:{" "}
+                    <span className="font-semibold text-gray-900 dark:text-gray-100">
+                      {currentWord.word}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Quality Rating */}
+            <div className="flex-1">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-gray-100 text-center mb-4">
+                这个单词对你来说有多难？
+              </h3>
+
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  onClick={() => handleQualityRating(0)}
+                  className="p-4 bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-2xl text-left cursor-pointer hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
+                >
+                  <Frown className="w-6 h-6 text-red-500 mb-2" />
+                  <div className="font-semibold text-red-700 dark:text-red-400">
+                    完全忘了
+                  </div>
+                  <div className="text-xs text-red-600 dark:text-red-500">
+                    1分钟后
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleQualityRating(2)}
+                  className="p-4 bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-2xl text-left cursor-pointer hover:bg-orange-100 dark:hover:bg-orange-900/30 transition-colors"
+                >
+                  <Meh className="w-6 h-6 text-orange-500 mb-2" />
+                  <div className="font-semibold text-orange-700 dark:text-orange-400">
+                    有点难
+                  </div>
+                  <div className="text-xs text-orange-600 dark:text-orange-500">
+                    1天后
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleQualityRating(4)}
+                  className="p-4 bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-2xl text-left cursor-pointer hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors"
+                >
+                  <Smile className="w-6 h-6 text-green-500 mb-2" />
+                  <div className="font-semibold text-green-700 dark:text-green-400">
+                    还不错
+                  </div>
+                  <div className="text-xs text-green-600 dark:text-green-500">
+                    正常间隔
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => handleQualityRating(5)}
+                  className="p-4 bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-2xl text-left cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors"
+                >
+                  <Laugh className="w-6 h-6 text-blue-500 mb-2" />
+                  <div className="font-semibold text-blue-700 dark:text-blue-400">
+                    很简单
+                  </div>
+                  <div className="text-xs text-blue-600 dark:text-blue-500">
+                    延长间隔
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
   );
 }
-

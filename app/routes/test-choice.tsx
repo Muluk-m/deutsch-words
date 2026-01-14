@@ -1,10 +1,8 @@
 import type { Route } from "./+types/test-choice";
-import { Link, useSearchParams } from "react-router";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
 import { usePronunciation } from "../hooks/usePronunciation";
-import { PageContainer } from "../components/PageContainer";
-import { BackButton } from "../components/BackButton";
 import { getUnitWords } from "../utils/unitManager";
 import {
   getMistakesList,
@@ -13,9 +11,22 @@ import {
   saveTestResult,
 } from "../utils/storageManager";
 import { parseGermanWord } from "../utils/wordParser";
+import { 
+  Trophy, 
+  Target, 
+  ChevronLeft,
+  ChevronRight,
+  Volume2, 
+  Home,
+  RotateCcw,
+  CheckCircle,
+  XCircle,
+  Sparkles,
+  Clock
+} from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
-  return [{ title: "选择题模式 - Deutsch Wörter" }];
+  return [{ title: "选择题 - Deutsch Wörter" }];
 }
 
 interface Choice {
@@ -25,6 +36,7 @@ interface Choice {
 
 export default function TestChoice() {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const unit = searchParams.get("unit");
   const count = parseInt(searchParams.get("count") || "20");
   const source = searchParams.get("source");
@@ -41,13 +53,11 @@ export default function TestChoice() {
   const currentWord = testWords[currentIndex];
   const { pronounce } = usePronunciation();
 
-  // 初始化测试单词
   useEffect(() => {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
         setAllWords(data);
-
         let wordsToTest: Word[];
 
         if (source === "mistakes") {
@@ -66,7 +76,6 @@ export default function TestChoice() {
       });
   }, [unit, count, source]);
 
-  // 为当前单词生成选项
   useEffect(() => {
     if (currentWord && allWords.length > 0) {
       generateChoices(currentWord);
@@ -75,45 +84,34 @@ export default function TestChoice() {
 
   const generateChoices = (correctWord: Word) => {
     const parsed = parseGermanWord(correctWord.word);
-
-    // 获取同词性的单词作为干扰项（如果有词性）
     let potentialDistractions = allWords.filter((w) => {
       if (w.word === correctWord.word) return false;
-
-      // 如果有词性，优先选择同词性的
       if (parsed.article) {
         const wParsed = parseGermanWord(w.word);
         return wParsed.article === parsed.article;
       }
-
       return true;
     });
 
-    // 如果同词性的不够，就从所有单词中选
     if (potentialDistractions.length < 3) {
-      potentialDistractions = allWords.filter(
-        (w) => w.word !== correctWord.word
-      );
+      potentialDistractions = allWords.filter((w) => w.word !== correctWord.word);
     }
 
-    // 随机选择3个干扰项
     const shuffled = [...potentialDistractions].sort(() => Math.random() - 0.5);
     const distractions = shuffled.slice(0, 3);
 
-    // 组合正确答案和干扰项
     const allChoices: Choice[] = [
       { word: correctWord, isCorrect: true },
       ...distractions.map((w) => ({ word: w, isCorrect: false })),
     ];
 
-    // 打乱顺序
     setChoices(allChoices.sort(() => Math.random() - 0.5));
     setSelectedChoice(null);
     setIsCorrect(null);
   };
 
   const handleSelectChoice = (index: number) => {
-    if (selectedChoice !== null) return; // 已经选择过了
+    if (selectedChoice !== null) return;
 
     setSelectedChoice(index);
     const correct = choices[index].isCorrect;
@@ -133,28 +131,22 @@ export default function TestChoice() {
     if (currentIndex < testWords.length - 1) {
       setCurrentIndex(currentIndex + 1);
     } else {
-      // 测试完成
       const timeSpent = Math.floor((Date.now() - startTime) / 1000);
       saveTestResult({
         mode: "choice",
         date: new Date().toISOString(),
         correct: score.correct + (isCorrect ? 1 : 0),
         total: score.total + 1,
-        accuracy:
-          ((score.correct + (isCorrect ? 1 : 0)) / (score.total + 1)) * 100,
+        accuracy: ((score.correct + (isCorrect ? 1 : 0)) / (score.total + 1)) * 100,
         timeSpent,
       });
       setCurrentIndex(currentIndex + 1);
     }
   };
 
-  const handlePronounce = () => {
-    if (currentWord) {
-      pronounce(currentWord.word);
-    }
-  };
+  const progress = testWords.length > 0 ? ((currentIndex + 1) / testWords.length) * 100 : 0;
 
-  // 测试完成
+  // Completion Screen
   if (currentIndex >= testWords.length && testWords.length > 0) {
     const accuracy = Math.round((score.correct / score.total) * 100);
     const timeSpent = Math.floor((Date.now() - startTime) / 1000);
@@ -162,202 +154,228 @@ export default function TestChoice() {
     const seconds = timeSpent % 60;
 
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-6xl mb-4">
-            {accuracy >= 90 ? "🏆" : accuracy >= 70 ? "🎉" : "💪"}
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+          <div className="px-4 py-3 flex items-center justify-between">
+            <button
+              onClick={() => navigate("/test-modes")}
+              className="p-2 -ml-2 text-gray-500 dark:text-gray-400 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">测试完成</h1>
+            <div className="w-10" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
-            选择题测试完成！
+        </header>
+
+        <main className="flex-1 flex flex-col items-center justify-center px-4 py-8">
+          {/* Trophy Icon */}
+          <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${
+            accuracy >= 90 ? "bg-gradient-to-br from-yellow-400 to-amber-500" :
+            accuracy >= 70 ? "bg-gradient-to-br from-blue-400 to-purple-500" :
+            "bg-gradient-to-br from-orange-400 to-red-500"
+          }`}>
+            <Trophy className="w-12 h-12 text-white" />
+          </div>
+
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 mb-2">
+            {accuracy >= 90 ? "太棒了！" : accuracy >= 70 ? "做得好！" : "继续加油！"}
           </h2>
-          <p className="text-gray-600 mb-6">
-            {accuracy >= 90
-              ? "完美！你对单词的理解非常到位！"
-              : accuracy >= 70
-              ? "很好！继续保持！"
-              : "加油！多复习会更好！"}
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
+            {accuracy >= 90 ? "你对这些单词掌握得很好" : accuracy >= 70 ? "再接再厉！" : "多练习会有提高"}
           </p>
 
-          <div className="grid grid-cols-2 gap-4 max-w-md mx-auto mb-8">
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-green-600">
-                {score.correct}
-              </div>
-              <div className="text-sm text-gray-600">正确</div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-4 w-full max-w-xs mb-8">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-green-600 dark:text-green-400">{score.correct}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">正确</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-red-600">
-                {score.total - score.correct}
-              </div>
-              <div className="text-sm text-gray-600">错误</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-red-600 dark:text-red-400">{score.total - score.correct}</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">错误</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-blue-600">
-                {accuracy}%
-              </div>
-              <div className="text-sm text-gray-600">正确率</div>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{accuracy}%</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">正确率</div>
             </div>
-            <div className="bg-white rounded-xl shadow-sm p-4">
-              <div className="text-3xl font-bold text-purple-600">
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 text-center">
+              <div className="text-3xl font-bold text-purple-600 dark:text-purple-400">
                 {minutes}:{seconds.toString().padStart(2, "0")}
               </div>
-              <div className="text-sm text-gray-600">用时</div>
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">用时</div>
             </div>
           </div>
 
-          <div className="flex gap-3 justify-center">
-            <Link
-              to="/test-modes"
-              className="bg-blue-500 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors"
-            >
-              返回测试模式
-            </Link>
+          {/* Action Buttons */}
+          <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
               onClick={() => window.location.reload()}
-              className="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors"
+              className="flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold cursor-pointer transition-all active:scale-95"
             >
+              <RotateCcw className="w-5 h-5" />
               再测一次
             </button>
+            <Link
+              to="/"
+              className="flex items-center justify-center gap-2 py-4 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-2xl font-medium cursor-pointer transition-all active:scale-95"
+            >
+              <Home className="w-5 h-5" />
+              返回首页
+            </Link>
           </div>
-        </div>
-      </PageContainer>
+        </main>
+      </div>
     );
   }
 
-  // 加载中
+  // Loading State
   if (!currentWord || choices.length === 0) {
     return (
-      <PageContainer>
-        <BackButton />
-        <div className="text-center py-12">
-          <div className="text-gray-600">准备中...</div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 dark:text-gray-400">准备题目中...</p>
         </div>
-      </PageContainer>
+      </div>
     );
   }
 
   return (
-    <PageContainer>
-      <BackButton />
-
-      {/* 进度条 */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-gray-600 mb-2">
-          <span>
-            进度: {currentIndex + 1} / {testWords.length}
-          </span>
-          <span>
-            正确率:{" "}
-            {score.total > 0
-              ? Math.round((score.correct / score.total) * 100)
-              : 0}
-            %
-          </span>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-2">
-          <div
-            className="bg-green-500 h-2 rounded-full transition-all"
-            style={{
-              width: `${((currentIndex + 1) / testWords.length) * 100}%`,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* 主内容区域 */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-6">
-        {/* 题目 */}
-        <div className="text-center mb-8">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            选择正确的德语单词
-          </h2>
-
-          {/* 中文释义 */}
-          <div className="bg-blue-50 rounded-xl p-6 mb-4">
-            <div className="text-3xl font-bold text-gray-800">
-              {currentWord.zh_cn}
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between mb-2">
+            <button
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 text-gray-500 dark:text-gray-400 cursor-pointer"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            
+            <div className="text-center">
+              <div className="text-sm font-bold text-gray-900 dark:text-gray-100">
+                {currentIndex + 1} / {testWords.length}
+              </div>
             </div>
+
+            {/* Score Badge */}
+            {score.total > 0 && (
+              <div className={`px-3 py-1 rounded-full text-xs font-medium ${
+                (score.correct / score.total) >= 0.8
+                  ? "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400"
+                  : (score.correct / score.total) >= 0.6
+                  ? "bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400"
+                  : "bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
+              }`}>
+                {Math.round((score.correct / score.total) * 100)}%
+              </div>
+            )}
+            {score.total === 0 && <div className="w-12" />}
           </div>
 
-          {/* 发音按钮 */}
-          <button
-            onClick={handlePronounce}
-            className="text-blue-600 hover:text-blue-700 transition-colors text-sm font-medium"
-          >
-            🔊 播放发音
-          </button>
+          {/* Progress Bar */}
+          <div className="h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-green-500 to-emerald-500 rounded-full transition-all duration-300"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col px-4 py-6">
+        {/* Question Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 mb-6 shadow-sm">
+          <p className="text-xs text-blue-600 dark:text-blue-400 font-medium text-center mb-2">
+            选择正确的德语单词
+          </p>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-gray-100 text-center mb-4">
+            {currentWord.zh_cn}
+          </h2>
+          
+          {/* Pronunciation Button */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => pronounce(currentWord.word)}
+              className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+            >
+              <Volume2 className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
-        {/* 选项 */}
-        <div className="grid gap-3 mb-6">
+        {/* Choices */}
+        <div className="flex-1 space-y-3">
           {choices.map((choice, index) => {
             const isSelected = selectedChoice === index;
             const showResult = selectedChoice !== null;
-
-            let bgColor = "bg-gray-50 hover:bg-gray-100 border-gray-200";
-            if (showResult) {
-              if (choice.isCorrect) {
-                bgColor = "bg-green-100 border-green-500";
-              } else if (isSelected) {
-                bgColor = "bg-red-100 border-red-500";
-              } else {
-                bgColor = "bg-gray-100 border-gray-200";
-              }
-            } else if (isSelected) {
-              bgColor = "bg-blue-100 border-blue-500";
-            }
+            const letters = ["A", "B", "C", "D"];
 
             return (
               <button
                 key={index}
                 onClick={() => handleSelectChoice(index)}
-                disabled={selectedChoice !== null}
-                className={`p-4 rounded-xl border-2 transition-all text-left ${bgColor} ${
-                  selectedChoice === null ? "hover:scale-102" : ""
+                disabled={showResult}
+                className={`w-full p-4 rounded-2xl text-left transition-all cursor-pointer active:scale-98 ${
+                  showResult
+                    ? choice.isCorrect
+                      ? "bg-green-50 dark:bg-green-900/20 border-2 border-green-500"
+                      : isSelected
+                      ? "bg-red-50 dark:bg-red-900/20 border-2 border-red-500"
+                      : "bg-gray-50 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 opacity-50"
+                    : "bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600"
                 }`}
               >
-                <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm ${
+                    showResult && choice.isCorrect
+                      ? "bg-green-500 text-white"
+                      : showResult && isSelected
+                      ? "bg-red-500 text-white"
+                      : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400"
+                  }`}>
+                    {showResult && choice.isCorrect ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : showResult && isSelected ? (
+                      <XCircle className="w-5 h-5" />
+                    ) : (
+                      letters[index]
+                    )}
+                  </div>
                   <div className="flex-1">
-                    <div className="text-xl font-bold text-gray-800 mb-1">
+                    <div className="text-xl font-semibold text-gray-900 dark:text-gray-100">
                       {choice.word.word}
                     </div>
                     {showResult && (
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         {choice.word.zh_cn}
                       </div>
                     )}
                   </div>
-                  {showResult && choice.isCorrect && (
-                    <span className="text-2xl">✓</span>
-                  )}
-                  {showResult && isSelected && !choice.isCorrect && (
-                    <span className="text-2xl">✗</span>
-                  )}
                 </div>
               </button>
             );
           })}
         </div>
+      </main>
 
-        {/* 下一题按钮 */}
-        {selectedChoice !== null && (
-          <div className="text-center">
+      {/* Footer */}
+      {selectedChoice !== null && (
+        <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 safe-area-bottom">
+          <div className="px-4 py-3">
             <button
               onClick={handleNext}
-              className="bg-green-500 text-white px-8 py-3 rounded-lg font-medium hover:bg-green-600 transition-colors"
+              className="w-full flex items-center justify-center gap-2 py-4 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl font-semibold cursor-pointer transition-all active:scale-95"
             >
-              {currentIndex < testWords.length - 1 ? "下一题 →" : "查看结果"}
+              {currentIndex < testWords.length - 1 ? "下一题" : "查看结果"}
+              <ChevronRight className="w-5 h-5" />
             </button>
           </div>
-        )}
-      </div>
-
-      {/* 说明 */}
-      <div className="text-center text-sm text-gray-500">
-        💡 选择题模式可以快速测试单词理解能力
-      </div>
-    </PageContainer>
+        </footer>
+      )}
+    </div>
   );
 }

@@ -1,11 +1,21 @@
 import type { Route } from "./+types/test-modes";
-import { Link, useSearchParams } from "react-router";
+import { Link, useSearchParams, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
-import { PageContainer } from "../components/PageContainer";
-import { BackButton } from "../components/BackButton";
 import { createUnits } from "../utils/unitManager";
 import { getMistakesList } from "../utils/storageManager";
+import { 
+  ChevronLeft, 
+  Headphones, 
+  CheckSquare, 
+  Languages, 
+  FileText,
+  BookOpen,
+  Zap,
+  ChevronRight,
+  Settings,
+  Home
+} from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "测试模式 - Deutsch Wörter" }];
@@ -14,62 +24,61 @@ export function meta({}: Route.MetaArgs) {
 interface TestMode {
   id: string;
   name: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   description: string;
   path: string;
-  color: string;
+  gradient: string;
 }
 
 const testModes: TestMode[] = [
   {
     id: "listening",
     name: "听写模式",
-    icon: "👂",
-    description: "听发音写单词，锻炼听力和拼写",
+    icon: Headphones,
+    description: "听发音写单词",
     path: "/test-listening",
-    color: "blue",
+    gradient: "from-blue-500 to-cyan-500",
   },
   {
     id: "choice",
-    name: "选择题模式",
-    icon: "✅",
-    description: "四选一，快速测试理解能力",
+    name: "选择题",
+    icon: CheckSquare,
+    description: "四选一测试",
     path: "/test-choice",
-    color: "green",
+    gradient: "from-green-500 to-emerald-500",
   },
   {
     id: "cn-to-de",
-    name: "中译德模式",
-    icon: "🇨🇳➡️🇩🇪",
-    description: "看中文写德语，完整拼写",
+    name: "中译德",
+    icon: Languages,
+    description: "看中文写德语",
     path: "/test-cn-to-de",
-    color: "purple",
+    gradient: "from-purple-500 to-violet-500",
   },
   {
     id: "cloze",
-    name: "填空练习",
-    icon: "📝",
-    description: "句子中填入正确单词",
+    name: "填空题",
+    icon: FileText,
+    description: "句子填空练习",
     path: "/test-cloze",
-    color: "orange",
+    gradient: "from-orange-500 to-amber-500",
   },
 ];
 
 export default function TestModes() {
   const [searchParams] = useSearchParams();
-  const source = searchParams.get("source"); // 'mistakes' 或 null
+  const navigate = useNavigate();
+  const source = searchParams.get("source");
 
   const [words, setWords] = useState<Word[]>([]);
   const [selectedUnit, setSelectedUnit] = useState<number | "all">("all");
-  const [selectedMode, setSelectedMode] = useState<string>("");
   const [questionCount, setQuestionCount] = useState(20);
+  const [showSettings, setShowSettings] = useState(false);
 
   useEffect(() => {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        setWords(data);
-      });
+      .then((data) => setWords(data));
   }, []);
 
   const units = createUnits(words);
@@ -77,182 +86,209 @@ export default function TestModes() {
 
   const getTestUrl = (mode: TestMode) => {
     const params = new URLSearchParams();
-
     if (source === "mistakes") {
       params.set("source", "mistakes");
     } else if (selectedUnit !== "all") {
       params.set("unit", selectedUnit.toString());
     }
-
     params.set("count", questionCount.toString());
-
     return `${mode.path}?${params.toString()}`;
   };
 
-  const colorClasses = {
-    blue: "bg-blue-50 border-blue-200 hover:bg-blue-100 text-blue-700",
-    green: "bg-green-50 border-green-200 hover:bg-green-100 text-green-700",
-    purple:
-      "bg-purple-50 border-purple-200 hover:bg-purple-100 text-purple-700",
-    orange:
-      "bg-orange-50 border-orange-200 hover:bg-orange-100 text-orange-700",
-  };
-
   return (
-    <PageContainer>
-      <BackButton />
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950">
+      {/* Header */}
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <div className="px-4 py-3 flex items-center justify-between">
+          <button
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 text-gray-500 dark:text-gray-400 cursor-pointer"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+          
+          <h1 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+            {source === "mistakes" ? "错题练习" : "测试模式"}
+          </h1>
 
-      {/* 标题 */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          {source === "mistakes" ? "错题专项练习" : "选择测试模式"}
-        </h1>
-        <p className="text-gray-600">
-          {source === "mistakes"
-            ? `共 ${mistakes.length} 个错题可供练习`
-            : "选择适合你的测试方式"}
-        </p>
-      </div>
+          <button
+            onClick={() => setShowSettings(!showSettings)}
+            className={`p-2 -mr-2 cursor-pointer transition-colors ${
+              showSettings ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
+            }`}
+          >
+            <Settings className="w-5 h-5" />
+          </button>
+        </div>
+      </header>
 
-      {/* 测试范围选择 */}
-      {source !== "mistakes" && (
-        <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-          <h2 className="text-lg font-bold text-gray-800 mb-4">测试范围</h2>
+      <main className="px-4 py-4 pb-24">
+        {/* Settings Panel */}
+        {showSettings && (
+          <div className="mb-4 p-4 bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 animate-scaleIn">
+            {/* Unit Selection */}
+            {source !== "mistakes" && (
+              <div className="mb-4">
+                <label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 block">
+                  测试范围
+                </label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setSelectedUnit("all")}
+                    className={`flex-1 py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      selectedUnit === "all"
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    全部
+                  </button>
+                  <select
+                    value={selectedUnit === "all" ? "" : selectedUnit}
+                    onChange={(e) => setSelectedUnit(e.target.value ? parseInt(e.target.value) : "all")}
+                    className="flex-1 py-2.5 px-3 rounded-xl text-sm font-medium bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-0 cursor-pointer"
+                  >
+                    <option value="">选择单元</option>
+                    {units.map((unit) => (
+                      <option key={unit.id} value={unit.id}>
+                        单元 {unit.id}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
 
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <button
-              onClick={() => setSelectedUnit("all")}
-              className={`py-3 px-4 rounded-lg font-medium transition-colors ${
-                selectedUnit === "all"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              全部单词
-            </button>
-            <button
-              onClick={() => setSelectedUnit(1)}
-              className={`py-3 px-4 rounded-lg font-medium transition-colors ${
-                selectedUnit !== "all" && selectedUnit !== "mistakes"
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              指定单元
-            </button>
+            {/* Question Count */}
+            <div>
+              <label className="text-sm font-medium text-gray-600 dark:text-gray-400 mb-2 block">
+                题目数量
+              </label>
+              <div className="grid grid-cols-4 gap-2">
+                {[10, 20, 30, 50].map((count) => (
+                  <button
+                    key={count}
+                    onClick={() => setQuestionCount(count)}
+                    className={`py-2.5 rounded-xl text-sm font-medium transition-all cursor-pointer ${
+                      questionCount === count
+                        ? "bg-blue-600 text-white"
+                        : "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
+                    }`}
+                  >
+                    {count}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Info Banner */}
+        {source === "mistakes" && (
+          <div className="mb-4 p-4 bg-orange-50 dark:bg-orange-900/20 rounded-2xl border border-orange-200 dark:border-orange-800">
+            <p className="text-sm text-orange-700 dark:text-orange-400 font-medium">
+              共 {mistakes.length} 个错题可供练习
+            </p>
+          </div>
+        )}
+
+        {/* Test Modes Grid */}
+        <div className="space-y-3 mb-6">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 px-1">
+            选择测试方式
+          </h2>
+          
+          <div className="grid grid-cols-2 gap-3">
+            {testModes.map((mode) => {
+              const Icon = mode.icon;
+              return (
+                <Link
+                  key={mode.id}
+                  to={getTestUrl(mode)}
+                  className="group bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-lg transition-all cursor-pointer"
+                >
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${mode.gradient} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
+                    <Icon className="w-6 h-6 text-white" />
+                  </div>
+                  <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-0.5">
+                    {mode.name}
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {mode.description}
+                  </p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Grammar Practice Section */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 px-1">
+            <Zap className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">
+              语法专练
+            </h2>
           </div>
 
-          {selectedUnit !== "all" && (
-            <div className="mt-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                选择单元
-              </label>
-              <select
-                value={selectedUnit}
-                onChange={(e) => setSelectedUnit(parseInt(e.target.value))}
-                className="w-full px-4 py-2 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none text-gray-800 bg-white"
-              >
-                {units.map((unit) => (
-                  <option
-                    key={unit.id}
-                    value={unit.id}
-                    className="text-gray-800"
-                  >
-                    单元 {unit.id} ({unit.totalWords} 个单词)
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* 题目数量选择 */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">题目数量</h2>
-
-        <div className="grid grid-cols-4 gap-2">
-          {[10, 20, 30, 50].map((count) => (
-            <button
-              key={count}
-              onClick={() => setQuestionCount(count)}
-              className={`py-2 px-4 rounded-lg font-medium transition-colors ${
-                questionCount === count
-                  ? "bg-blue-500 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {count}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 测试模式选择 */}
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <h2 className="text-lg font-bold text-gray-800 mb-4">选择测试模式</h2>
-
-        <div className="grid gap-4">
-          {testModes.map((mode) => (
+          <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <Link
-              key={mode.id}
-              to={getTestUrl(mode)}
-              className={`block p-6 rounded-xl border-2 transition-all ${
-                colorClasses[mode.color as keyof typeof colorClasses]
-              }`}
+              to="/practice-articles"
+              className="flex items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer transition-colors"
             >
-              <div className="flex items-center gap-4">
-                <div className="text-4xl">{mode.icon}</div>
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold mb-1">{mode.name}</h3>
-                  <p className="text-sm opacity-80">{mode.description}</p>
-                </div>
-                <svg
-                  className="w-6 h-6 opacity-50"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 5l7 7-7 7"
-                  />
-                </svg>
+              <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+                <BookOpen className="w-5 h-5" />
               </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">冠词练习</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">der / die / das</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-600" />
             </Link>
-          ))}
-        </div>
-      </div>
 
-      {/* 语法练习入口 */}
-      <div className="bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl shadow-lg p-6 text-white">
-        <h2 className="text-xl font-bold mb-2">🎓 德语语法专项练习</h2>
-        <p className="text-sm opacity-90 mb-4">
-          专门练习冠词、复数、动词变位等德语特色语法
-        </p>
-        <div className="grid grid-cols-3 gap-2">
+            <Link
+              to="/practice-plural"
+              className="flex items-center gap-4 p-4 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+                <Languages className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">复数练习</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Plural</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+            </Link>
+
+            <Link
+              to="/practice-verbs"
+              className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-gray-750 cursor-pointer transition-colors"
+            >
+              <div className="w-10 h-10 rounded-xl bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 flex items-center justify-center">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100">动词变位</h3>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Konjugation</p>
+              </div>
+              <ChevronRight className="w-5 h-5 text-gray-300 dark:text-gray-600" />
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      {/* Bottom Navigation */}
+      <nav className="fixed bottom-0 left-0 right-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 safe-area-bottom">
+        <div className="flex items-center justify-center h-16 px-4">
           <Link
-            to="/practice-articles"
-            className="text-center bg-white text-indigo-700 py-3 rounded-lg text-sm font-medium hover:bg-opacity-95 transition-colors font-bold"
+            to="/"
+            className="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded-xl font-medium cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
-            der/die/das
-          </Link>
-          <Link
-            to="/practice-plural"
-            className="text-center bg-white text-purple-700 py-3 rounded-lg text-sm font-medium hover:bg-opacity-95 transition-colors font-bold"
-          >
-            复数练习
-          </Link>
-          <Link
-            to="/practice-verbs"
-            className="text-center bg-white text-indigo-700 py-3 rounded-lg text-sm font-medium hover:bg-opacity-95 transition-colors font-bold"
-          >
-            动词变位
+            <Home className="w-5 h-5" />
+            返回首页
           </Link>
         </div>
-      </div>
-    </PageContainer>
+      </nav>
+    </div>
   );
 }

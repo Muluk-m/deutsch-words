@@ -16,62 +16,64 @@ export function PronunciationButtons({
   const parsed = parseGermanWord(word);
 
   const singularColorClasses = {
-    purple: "bg-purple-100 hover:bg-purple-200 text-purple-600",
-    blue: "bg-blue-100 hover:bg-blue-200 text-blue-600",
-    green: "bg-green-100 hover:bg-green-200 text-green-600",
+    purple: "bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700",
+    blue: "bg-gradient-to-br from-blue-400 to-blue-600 hover:from-blue-500 hover:to-blue-700",
+    green: "bg-gradient-to-br from-green-400 to-green-600 hover:from-green-500 hover:to-green-700",
   };
 
   const pluralColorClasses = {
-    pink: "bg-pink-100 hover:bg-pink-200 text-pink-600",
-    purple: "bg-purple-100 hover:bg-purple-200 text-purple-600",
-    emerald: "bg-emerald-100 hover:bg-emerald-200 text-emerald-600",
+    pink: "bg-gradient-to-br from-pink-400 to-pink-600 hover:from-pink-500 hover:to-pink-700",
+    purple: "bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700",
+    emerald: "bg-gradient-to-br from-emerald-400 to-emerald-600 hover:from-emerald-500 hover:to-emerald-700",
   };
 
   return (
-    <div className="flex items-center justify-center gap-3 mb-6">
-      <div className="flex flex-col items-center">
+    <div className="flex items-center justify-center gap-6 my-6">
+      <div className="flex flex-col items-center group">
         <button
           onClick={() => pronounceSingular(word)}
-          className={`w-12 h-12 ${singularColorClasses[singularColor]} rounded-full flex items-center justify-center transition-all active:scale-95`}
+          className={`w-16 h-16 ${singularColorClasses[singularColor]} 
+            rounded-2xl flex items-center justify-center 
+            transition-all duration-200 
+            active:scale-90 hover:scale-110
+            shadow-lg hover:shadow-xl
+            text-white`}
         >
           <svg
-            className="w-5 h-5"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+            className="w-7 h-7"
+            fill="currentColor"
+            viewBox="0 0 20 20"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-            />
+            <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd"/>
           </svg>
         </button>
-        <span className="text-xs text-gray-500 mt-1">单数</span>
+        <span className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+          单数发音
+        </span>
       </div>
 
       {parsed.pluralForPronunciation && (
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center group">
           <button
             onClick={() => pronouncePlural(word)}
-            className={`w-12 h-12 ${pluralColorClasses[pluralColor]} rounded-full flex items-center justify-center transition-all active:scale-95`}
+            className={`w-16 h-16 ${pluralColorClasses[pluralColor]} 
+              rounded-2xl flex items-center justify-center 
+              transition-all duration-200 
+              active:scale-90 hover:scale-110
+              shadow-lg hover:shadow-xl
+              text-white`}
           >
             <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+              className="w-7 h-7"
+              fill="currentColor"
+              viewBox="0 0 20 20"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"
-              />
+              <path fillRule="evenodd" d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.707.707L4.586 13H2a1 1 0 01-1-1V8a1 1 0 011-1h2.586l3.707-3.707a1 1 0 011.09-.217zM14.657 2.929a1 1 0 011.414 0A9.972 9.972 0 0119 10a9.972 9.972 0 01-2.929 7.071 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 10c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414zm-2.829 2.828a1 1 0 011.415 0A5.983 5.983 0 0115 10a5.984 5.984 0 01-1.757 4.243 1 1 0 01-1.415-1.415A3.984 3.984 0 0013 10a3.983 3.983 0 00-1.172-2.828 1 1 0 010-1.415z" clipRule="evenodd"/>
             </svg>
           </button>
-          <span className="text-xs text-gray-500 mt-1">复数</span>
+          <span className="text-xs text-gray-600 dark:text-gray-400 mt-2 font-medium group-hover:text-gray-800 dark:group-hover:text-gray-200 transition-colors">
+            复数发音
+          </span>
         </div>
       )}
     </div>

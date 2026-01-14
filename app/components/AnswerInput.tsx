@@ -21,10 +21,10 @@ export function AnswerInput({
   borderColor = "purple",
   autoFocus = true,
 }: AnswerInputProps) {
-  const borderColorClasses = {
-    purple: "focus:border-purple-500",
-    blue: "focus:border-blue-500",
-    green: "focus:border-green-500",
+  const colorClasses = {
+    purple: "focus:border-purple-500 focus:ring-purple-500/20",
+    blue: "focus:border-blue-500 focus:ring-blue-500/20",
+    green: "focus:border-green-500 focus:ring-green-500/20",
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -37,17 +37,29 @@ export function AnswerInput({
   };
 
   return (
-    <div className="space-y-3">
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyPress={handleKeyPress}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`w-full text-center text-3xl font-bold border-2 border-gray-300 rounded-xl py-4 px-6 focus:outline-none ${borderColorClasses[borderColor]} disabled:bg-gray-50 text-gray-900 disabled:text-gray-500`}
-        autoFocus={autoFocus}
-      />
+    <div className="space-y-4">
+      <div className="relative group">
+        <input
+          type="text"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyPress={handleKeyPress}
+          placeholder={placeholder}
+          disabled={disabled}
+          className={`w-full text-center text-3xl md:text-4xl font-bold border-3 border-gray-300 dark:border-gray-600 rounded-2xl py-5 px-6 
+            focus:outline-none focus:ring-4 ${colorClasses[borderColor]}
+            disabled:bg-gray-100 dark:disabled:bg-gray-800 
+            bg-white dark:bg-gray-800
+            text-gray-900 dark:text-gray-100 
+            disabled:text-gray-400 dark:disabled:text-gray-600
+            transition-all duration-200
+            shadow-lg group-hover:shadow-xl`}
+          autoFocus={autoFocus}
+        />
+        {!value && (
+          <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-gray-300 dark:via-gray-600 to-transparent opacity-50"></div>
+        )}
+      </div>
       
       {/* 提交和跳过按钮 */}
       {(onSubmit || onSkip) && (
@@ -56,16 +68,21 @@ export function AnswerInput({
             <button
               onClick={onSubmit}
               disabled={disabled || !value.trim()}
-              className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="flex-1 btn-primary disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-lg"
             >
-              提交答案
+              <span className="flex items-center justify-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                </svg>
+                提交答案
+              </span>
             </button>
           )}
           {onSkip && (
             <button
               onClick={onSkip}
               disabled={disabled}
-              className="px-6 bg-gray-200 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
             >
               跳过
             </button>
