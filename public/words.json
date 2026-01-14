@@ -182,11 +182,11 @@
     "wordType": "noun"
   },
   {
-    "word": "das Portmonnee, -s",
+    "word": "das Portmonee, -s",
     "zh_cn": "钱包",
     "unitId": 1,
-    "phoneticFailed": true,
-    "wordType": "noun"
+    "wordType": "noun",
+    "phonetic": "/pɔʁtmoˈneː/"
   },
   {
     "word": "die Brille, -n",
@@ -353,8 +353,8 @@
     "word": "Wer",
     "zh_cn": "谁?",
     "unitId": 1,
-    "phoneticFailed": true,
-    "wordType": "other"
+    "wordType": "other",
+    "phonetic": "/veːɐ̯/"
   },
   {
     "word": "Was",
@@ -421,8 +421,8 @@
     "word": "Tschüss",
     "zh_cn": "再见!（口语）",
     "unitId": 1,
-    "phoneticFailed": true,
-    "wordType": "other"
+    "wordType": "other",
+    "phonetic": "/t͡ʃʏs/"
   },
   {
     "word": "Auf Wiedersehen",
@@ -435,8 +435,8 @@
     "word": "Ciao",
     "zh_cn": "再见!（口语）",
     "unitId": 1,
-    "phoneticFailed": true,
-    "wordType": "other"
+    "wordType": "other",
+    "phonetic": "/t͡ʃaʊ̯/"
   },
   {
     "word": "Wie geht's",
@@ -1139,8 +1139,8 @@
     "word": "einhundert/hundert",
     "zh_cn": "100",
     "unitId": 2,
-    "phoneticFailed": true,
-    "wordType": "other"
+    "wordType": "other",
+    "phonetic": "/ˈhʊndɐt/"
   },
   {
     "word": "Woher?",
@@ -1810,11 +1810,11 @@
     "wordType": "other"
   },
   {
-    "word": "irka",
+    "word": "zirka",
     "zh_cn": "大约，大概",
     "unitId": 3,
-    "phoneticFailed": true,
-    "wordType": "other"
+    "wordType": "other",
+    "phonetic": "/ˈt͡sɪʁka/"
   },
   {
     "word": "sehr",
