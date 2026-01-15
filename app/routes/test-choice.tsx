@@ -155,7 +155,7 @@ export default function TestChoice() {
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => navigate("/test-modes")}
@@ -244,7 +244,7 @@ export default function TestChoice() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <button
@@ -364,7 +364,7 @@ export default function TestChoice() {
 
       {/* Footer */}
       {selectedChoice !== null && (
-        <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 safe-area-bottom">
+        <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
           <div className="px-4 py-3">
             <button
               onClick={handleNext}

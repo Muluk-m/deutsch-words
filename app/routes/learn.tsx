@@ -1,5 +1,5 @@
 import type { Route } from "./+types/learn";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { parseGermanWord, buildPluralForm } from "../utils/wordParser";
 import type { Word } from "../types/word";
@@ -7,6 +7,7 @@ import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
 import { usePronunciation } from "../hooks/usePronunciation";
 import { getUnitWords } from "../utils/unitManager";
+import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -146,7 +147,7 @@ export default function Learn() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
             <button
@@ -213,7 +214,7 @@ export default function Learn() {
       </main>
 
       {/* Navigation Footer */}
-      <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800 safe-area-bottom">
+      <footer className="sticky bottom-0 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-t border-gray-100 dark:border-gray-800" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="px-4 py-3 flex gap-3">
           <button
             onClick={handlePrevious}

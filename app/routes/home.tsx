@@ -126,13 +126,16 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-nav">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+      <header
+        className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <img 
-                src="/logo.svg" 
-                alt="Deutsch Wörter Logo" 
+              <img
+                src="/logo.svg"
+                alt="Deutsch Wörter Logo"
                 className="w-11 h-11 rounded-xl shadow-md"
               />
               <div>

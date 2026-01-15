@@ -1,6 +1,6 @@
 import type { Route } from "./+types/test-listening";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePronunciation } from "../hooks/usePronunciation";
@@ -11,6 +11,7 @@ import {
   recordStudySession,
   saveTestResult,
 } from "../utils/storageManager";
+import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
   ChevronLeft,
   Volume2,
@@ -47,6 +48,7 @@ export default function TestListening() {
   const [attempts, setAttempts] = useState(0);
   const [autoPlayEnabled, setAutoPlayEnabled] = useState(true);
   const [startTime] = useState(Date.now());
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const currentWord = testWords[currentIndex];
   const { checkAnswer } = useAnswerCheck();
@@ -126,6 +128,22 @@ export default function TestListening() {
     recordStudySession(false);
   };
 
+  const handleInsertChar = (char: string) => {
+    const input = inputRef.current;
+    if (!input) {
+      setUserInput(userInput + char);
+      return;
+    }
+    const start = input.selectionStart || 0;
+    const end = input.selectionEnd || 0;
+    const newValue = userInput.slice(0, start) + char + userInput.slice(end);
+    setUserInput(newValue);
+    setTimeout(() => {
+      input.focus();
+      input.setSelectionRange(start + char.length, start + char.length);
+    }, 0);
+  };
+
   const progress =
     testWords.length > 0 ? ((currentIndex + 1) / testWords.length) * 100 : 0;
 
@@ -138,7 +156,10 @@ export default function TestListening() {
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+        <header
+          className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        >
           <div className="px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => navigate("/test-modes")}
@@ -240,7 +261,10 @@ export default function TestListening() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+      <header
+        className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <button
@@ -328,6 +352,7 @@ export default function TestListening() {
           {isCorrect === null ? (
             <>
               <input
+                ref={inputRef}
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
@@ -336,8 +361,9 @@ export default function TestListening() {
                 }
                 placeholder="输入德语单词..."
                 autoFocus
-                className="w-full h-14 px-4 text-center text-xl font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-2xl outline-none transition-all mb-4"
+                className="w-full h-14 px-4 text-center text-xl font-medium bg-white dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 focus:border-blue-500 rounded-2xl outline-none transition-all mb-2"
               />
+              <GermanKeyboardCompact onInsert={handleInsertChar} className="mb-4" />
               <div className="flex gap-4 justify-center text-sm">
                 <button
                   onClick={() => setShowHint(!showHint)}

@@ -103,7 +103,7 @@ export default function PracticeArticles() {
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
           <div className="px-4 py-3 flex items-center justify-between">
             <button onClick={() => navigate("/")} className="p-2 -ml-2 text-gray-500 cursor-pointer">
               <ChevronLeft className="w-6 h-6" />
@@ -204,7 +204,7 @@ export default function PracticeArticles() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800">
+      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800" style={{ paddingTop: 'env(safe-area-inset-top, 0px)' }}>
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <button onClick={() => navigate(-1)} className="p-2 -ml-2 text-gray-500 cursor-pointer">
@@ -305,7 +305,7 @@ export default function PracticeArticles() {
       )}
 
       {/* Tips */}
-      <div className="px-4 pb-4 safe-area-bottom">
+      <div className="px-4 pb-4" style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-4">
           <div className="flex items-start gap-2">
             <Lightbulb className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />

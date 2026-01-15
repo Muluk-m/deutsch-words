@@ -9,16 +9,19 @@ interface GermanKeyboardProps {
 }
 
 const GERMAN_CHARS = [
-  { char: 'ä', label: 'ä' },
-  { char: 'ö', label: 'ö' },
-  { char: 'ü', label: 'ü' },
-  { char: 'ß', label: 'ß' },
-  { char: 'Ä', label: 'Ä' },
-  { char: 'Ö', label: 'Ö' },
-  { char: 'Ü', label: 'Ü' },
+  { char: "ä", label: "ä" },
+  { char: "ö", label: "ö" },
+  { char: "ü", label: "ü" },
+  { char: "ß", label: "ß" },
+  { char: "Ä", label: "Ä" },
+  { char: "Ö", label: "Ö" },
+  { char: "Ü", label: "Ü" },
 ];
 
-export function GermanKeyboard({ onInsert, className = '' }: GermanKeyboardProps) {
+export function GermanKeyboard({
+  onInsert,
+  className = "",
+}: GermanKeyboardProps) {
   return (
     <div className={`flex items-center justify-center gap-1.5 ${className}`}>
       {GERMAN_CHARS.map(({ char, label }) => (
@@ -45,9 +48,12 @@ export function GermanKeyboard({ onInsert, className = '' }: GermanKeyboardProps
 /**
  * 紧凑版德语键盘（只显示小写）
  */
-export function GermanKeyboardCompact({ onInsert, className = '' }: GermanKeyboardProps) {
-  const compactChars = ['ä', 'ö', 'ü', 'ß'];
-  
+export function GermanKeyboardCompact({
+  onInsert,
+  className = "",
+}: GermanKeyboardProps) {
+  const compactChars = ["ä", "ö", "ü", "ß"];
+
   return (
     <div className={`flex items-center justify-center gap-1 ${className}`}>
       {compactChars.map((char) => (
@@ -70,4 +76,3 @@ export function GermanKeyboardCompact({ onInsert, className = '' }: GermanKeyboa
     </div>
   );
 }
-

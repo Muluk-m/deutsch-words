@@ -167,7 +167,10 @@ export default function SRSReview() {
   if (allWords.length > 0 && dueWords.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <header
+          className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        >
           <div className="px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => navigate(-1)}
@@ -211,7 +214,10 @@ export default function SRSReview() {
 
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
-        <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+        <header
+          className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+          style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+        >
           <div className="px-4 py-3 flex items-center justify-between">
             <button
               onClick={() => navigate("/")}
@@ -294,7 +300,10 @@ export default function SRSReview() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800 safe-area-top">
+      <header
+        className="sticky top-0 z-40 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-100 dark:border-gray-800"
+        style={{ paddingTop: "env(safe-area-inset-top, 0px)" }}
+      >
         <div className="px-4 py-3">
           <div className="flex items-center justify-between mb-2">
             <button
