@@ -1,0 +1,73 @@
+{
+  "name": "Deutsche Drill - 德语词汇训练",
+  "short_name": "Deutsche Drill",
+  "description": "德语词汇学习与练习应用，支持SRS间隔重复记忆",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f23",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "categories": [
+    "education",
+    "productivity"
+  ],
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "SRS 复习",
+      "short_name": "复习",
+      "url": "/srs-review",
+      "icons": [
+        {
+          "src": "/logo.svg",
+          "sizes": "any"
+        }
+      ]
+    },
+    {
+      "name": "随机练习",
+      "short_name": "随机",
+      "url": "/random",
+      "icons": [
+        {
+          "src": "/logo.svg",
+          "sizes": "any"
+        }
+      ]
+    }
+  ]
+}

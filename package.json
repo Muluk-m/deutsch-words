@@ -28,6 +28,7 @@
 		"@types/react": "^19.0.0",
 		"@types/react-dom": "^19.0.0",
 		"jsdom": "^25.0.0",
+		"sharp": "^0.34.5",
 		"tailwindcss": "4.1.17",
 		"typescript": "5.9.3",
 		"vite": "^6.0.0",
@@ -45,6 +46,7 @@
 		"deploy": "wrangler deploy",
 		"dev": "react-router dev",
 		"fetch-phonetics": "node scripts/fetchPhonetics.js",
+		"generate-icons": "node scripts/generateIcons.js",
 		"preview": "npm run build && vite preview",
 		"typecheck": "npm run typegen && tsc -b"
 	},
