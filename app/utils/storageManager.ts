@@ -18,6 +18,7 @@ const KEYS = {
   MIGRATED: 'dataMigrated',                // 数据迁移标记
   DAILY_GOAL: 'dailyGoal',                 // 每日学习目标
   FAVORITES: 'favorites',                   // 生词本
+  SELECTED_UNITS: 'selectedUnits',         // 选中的学习单元
 };
 
 // ==================== SRS Progress ====================
@@ -492,6 +493,67 @@ export function updateFavoriteNote(word: string, note: string): void {
 export function getFavoritesCount(): number {
   const favorites = getFavorites();
   return Object.keys(favorites).length;
+}
+
+// ==================== Selected Units ====================
+
+/**
+ * 获取选中的学习单元
+ * 返回 null 表示全部单元
+ */
+export function getSelectedUnits(): number[] | null {
+  try {
+    const data = localStorage.getItem(KEYS.SELECTED_UNITS);
+    if (!data) return null;
+    const units = JSON.parse(data) as number[];
+    return units.length > 0 ? units : null;
+  } catch (error) {
+    console.error('Error reading selected units:', error);
+    return null;
+  }
+}
+
+/**
+ * 设置选中的学习单元
+ * 传入 null 或空数组表示全部单元
+ */
+export function setSelectedUnits(units: number[] | null): void {
+  try {
+    if (!units || units.length === 0) {
+      localStorage.removeItem(KEYS.SELECTED_UNITS);
+    } else {
+      localStorage.setItem(KEYS.SELECTED_UNITS, JSON.stringify(units));
+    }
+  } catch (error) {
+    console.error('Error saving selected units:', error);
+  }
+}
+
+/**
+ * 切换单元选中状态
+ */
+export function toggleUnitSelection(unitId: number): number[] | null {
+  const current = getSelectedUnits() || [];
+  let newUnits: number[];
+  
+  if (current.includes(unitId)) {
+    newUnits = current.filter(id => id !== unitId);
+  } else {
+    newUnits = [...current, unitId].sort((a, b) => a - b);
+  }
+  
+  setSelectedUnits(newUnits.length > 0 ? newUnits : null);
+  return newUnits.length > 0 ? newUnits : null;
+}
+
+/**
+ * 检查单元是否被选中
+ */
+export function isUnitSelected(unitId: number): boolean {
+  const selected = getSelectedUnits();
+  // 如果没有选中任何单元，则视为全选
+  if (!selected) return true;
+  return selected.includes(unitId);
 }
 
 // ==================== Clear Data ====================

@@ -4,14 +4,15 @@ import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
-import { getUnitWords } from "../utils/unitManager";
+import { getUnitWords, filterWordsByUnits } from "../utils/unitManager";
+import { getSelectedUnits } from "../utils/storageManager";
 import { PageContainer } from "../components/PageContainer";
 import { BackButton } from "../components/BackButton";
 import { ProgressBar } from "../components/ProgressBar";
 import { PronunciationButtons } from "../components/PronunciationButtons";
 import { AnswerInput } from "../components/AnswerInput";
 import { AnswerFeedback } from "../components/AnswerFeedback";
-import { StatsCard } from "../components/StatsCard";
+import { BookOpen, Home, CheckCircle, XCircle, Trophy } from "lucide-react";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "复习模式 - Deutsch Wörter" }];
@@ -52,7 +53,10 @@ export default function Review() {
             learnedWords.includes(w.word)
           );
         } else {
-          wordsToReview = data.filter((w: Word) =>
+          // 使用全局选中的单元过滤
+          const selectedUnits = getSelectedUnits();
+          const filteredWords = filterWordsByUnits(data, selectedUnits);
+          wordsToReview = filteredWords.filter((w: Word) =>
             learnedWords.includes(w.word)
           );
         }
@@ -91,24 +95,28 @@ export default function Review() {
     }
   };
 
+  // 空状态
   if (words.length === 0) {
     return (
       <PageContainer>
         <BackButton />
 
-        <div className="bg-white rounded-2xl shadow-xl p-12 text-center mt-6">
-          <div className="text-6xl mb-4">📚</div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center mt-6">
+          <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+            <BookOpen className="w-10 h-10 text-purple-600 dark:text-purple-400" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">
             {unitId
               ? `单元 ${unitId} 还没有学习过的单词`
               : "还没有学习过的单词"}
           </h2>
-          <p className="text-gray-600 mb-6">请先去学习一些单词吧</p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">请先去学习一些单词吧</p>
           <Link
-            to={unitId ? `/learn?unit=${unitId}` : "/learn"}
-            className="inline-block bg-gradient-to-r from-blue-500 to-purple-500 text-white px-8 py-3 rounded-xl font-medium hover:shadow-lg transition-all"
+            to={unitId ? `/unit/${unitId}` : "/"}
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium cursor-pointer active:scale-95 transition-all"
           >
-            {unitId ? `开始学习单元 ${unitId}` : "开始学习"}
+            <Home className="w-5 h-5" />
+            {unitId ? `学习单元 ${unitId}` : "返回首页"}
           </Link>
         </div>
       </PageContainer>
@@ -126,25 +134,33 @@ export default function Review() {
         <BackButton />
         <div className="text-right">
           {unitId && (
-            <div className="text-xs text-gray-500 mb-1">单元 {unitId}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">单元 {unitId}</div>
           )}
-          <div className="text-sm text-gray-600">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {currentIndex + 1} / {words.length}
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
-        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-green-600">
-            {correctCount}
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <span className="text-2xl font-bold text-green-600 dark:text-green-400">
+              {correctCount}
+            </span>
           </div>
-          <div className="text-sm text-gray-600">正确</div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">正确</div>
         </div>
-        <div className="bg-red-50 border border-red-200 rounded-xl p-4 text-center">
-          <div className="text-2xl font-bold text-red-600">{wrongCount}</div>
-          <div className="text-sm text-gray-600">错误</div>
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <XCircle className="w-5 h-5 text-red-600 dark:text-red-400" />
+            <span className="text-2xl font-bold text-red-600 dark:text-red-400">
+              {wrongCount}
+            </span>
+          </div>
+          <div className="text-sm text-gray-600 dark:text-gray-400">错误</div>
         </div>
       </div>
 
@@ -156,12 +172,12 @@ export default function Review() {
       />
 
       {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
-        <div className="mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6">
+        <div className="mb-6">
           {/* 中文释义 */}
           <div className="text-center mb-6">
-            <div className="bg-purple-50 rounded-xl px-6 py-4">
-              <div className="text-2xl text-gray-800 font-medium">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl px-6 py-4">
+              <div className="text-2xl text-gray-800 dark:text-gray-100 font-medium">
                 {currentWord.zh_cn}
               </div>
             </div>
@@ -170,7 +186,7 @@ export default function Review() {
           {/* 音标 */}
           {phonetic && (
             <div className="text-center mb-4">
-              <div className="text-base text-gray-500 font-mono">
+              <div className="text-base text-gray-500 dark:text-gray-400 font-mono">
                 {phonetic}
               </div>
             </div>
@@ -207,7 +223,7 @@ export default function Review() {
           <button
             onClick={handleCheckAnswer}
             disabled={!userInput.trim()}
-            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white py-4 rounded-xl font-semibold cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             检查答案
           </button>
@@ -215,7 +231,7 @@ export default function Review() {
           <button
             onClick={handleNext}
             disabled={currentIndex === words.length - 1}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {currentIndex === words.length - 1 ? "复习完成" : "下一个单词"}
           </button>
@@ -224,17 +240,22 @@ export default function Review() {
 
       {/* Completion Message */}
       {currentIndex === words.length - 1 && isCorrect !== null && (
-        <div className="bg-purple-50 border border-purple-200 rounded-xl p-6 text-center">
-          <div className="text-4xl mb-3">🎉</div>
-          <h3 className="text-xl font-bold text-gray-800 mb-2">复习完成！</h3>
-          <p className="text-gray-600 mb-4">
+        <div className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-xl p-6 text-center">
+          <div className="w-16 h-16 mx-auto mb-3 rounded-full bg-purple-100 dark:bg-purple-800/50 flex items-center justify-center">
+            <Trophy className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+          </div>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-2">复习完成！</h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
             正确率：
-            {Math.round((correctCount / (correctCount + wrongCount)) * 100)}%
+            <span className="font-semibold text-purple-600 dark:text-purple-400">
+              {Math.round((correctCount / (correctCount + wrongCount)) * 100)}%
+            </span>
           </p>
           <Link
             to="/"
-            className="inline-block bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-2 rounded-lg font-medium hover:shadow-lg transition-all"
+            className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium cursor-pointer active:scale-95 transition-all"
           >
+            <Home className="w-5 h-5" />
             返回首页
           </Link>
         </div>

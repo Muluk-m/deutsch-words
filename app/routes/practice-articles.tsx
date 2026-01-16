@@ -2,7 +2,8 @@ import type { Route } from "./+types/practice-articles";
 import { Link, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
-import { recordStudySession, saveTestResult } from "../utils/storageManager";
+import { recordStudySession, saveTestResult, getSelectedUnits } from "../utils/storageManager";
+import { filterWordsByUnits } from "../utils/unitManager";
 import {
   ChevronLeft,
   ChevronRight,
@@ -41,8 +42,11 @@ export default function PracticeArticles() {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
+        // 使用全局选中的单元过滤
+        const selectedUnits = getSelectedUnits();
+        const filteredData = filterWordsByUnits(data, selectedUnits);
         // 直接使用 Word 对象上的 article 字段
-        const nouns = data.filter(
+        const nouns = filteredData.filter(
           (w) => w.article && ["der", "die", "das"].includes(w.article)
         );
         const shuffled = [...nouns].sort(() => Math.random() - 0.5);

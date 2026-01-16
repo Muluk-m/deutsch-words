@@ -4,7 +4,8 @@ import { useSearchParams } from "react-router";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
-import { getUnitWords } from "../utils/unitManager";
+import { getUnitWords, filterWordsByUnits } from "../utils/unitManager";
+import { getSelectedUnits } from "../utils/storageManager";
 import { PageContainer } from "../components/PageContainer";
 import { BackButton } from "../components/BackButton";
 import { PronunciationButtons } from "../components/PronunciationButtons";
@@ -59,7 +60,9 @@ export default function Random() {
         if (unitId) {
           wordsToTest = getUnitWords(data, parseInt(unitId));
         } else {
-          wordsToTest = data;
+          // 使用全局选中的单元过滤
+          const selectedUnits = getSelectedUnits();
+          wordsToTest = filterWordsByUnits(data, selectedUnits);
         }
 
         setAllWords(wordsToTest);
@@ -97,8 +100,8 @@ export default function Random() {
       <PageContainer>
         <div className="flex items-center justify-center min-h-[50vh]">
           <div className="text-center">
-            <div className="text-4xl mb-4">🎲</div>
-            <div className="text-gray-600">加载中...</div>
+            <div className="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <div className="text-gray-600 dark:text-gray-400">加载中...</div>
           </div>
         </div>
       </PageContainer>
@@ -115,9 +118,13 @@ export default function Random() {
         <BackButton />
         <div className="text-right">
           {unitId && (
-            <div className="text-xs text-gray-500 mb-1">单元 {unitId}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+              单元 {unitId}
+            </div>
           )}
-          <div className="text-sm font-medium text-gray-700">随机抽查</div>
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-300">
+            随机抽查
+          </div>
         </div>
       </div>
 
@@ -129,12 +136,12 @@ export default function Random() {
       </div>
 
       {/* Main Card */}
-      <div className="bg-white rounded-2xl shadow-xl p-8 mb-6">
-        <div className="mb-8">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-6 mb-6">
+        <div className="mb-6">
           {/* 中文释义 */}
           <div className="text-center mb-6">
-            <div className="bg-green-50 rounded-xl px-6 py-4">
-              <div className="text-2xl text-gray-800 font-medium">
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-xl px-6 py-4">
+              <div className="text-2xl text-gray-800 dark:text-gray-100 font-medium">
                 {currentWord.zh_cn}
               </div>
             </div>
@@ -143,7 +150,7 @@ export default function Random() {
           {/* 音标 */}
           {phonetic && (
             <div className="text-center mb-4">
-              <div className="text-base text-gray-500 font-mono">
+              <div className="text-base text-gray-500 dark:text-gray-400 font-mono">
                 {phonetic}
               </div>
             </div>
@@ -180,14 +187,14 @@ export default function Random() {
           <button
             onClick={handleCheckAnswer}
             disabled={!userInput.trim()}
-            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-green-500 to-emerald-500 text-white py-4 rounded-xl font-semibold cursor-pointer active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
           >
             检查答案
           </button>
         ) : (
           <button
             onClick={handleNext}
-            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-4 rounded-xl font-medium hover:shadow-lg transition-all active:scale-95"
+            className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-4 rounded-xl font-semibold cursor-pointer active:scale-[0.98] transition-all"
           >
             下一个单词
           </button>
@@ -195,12 +202,28 @@ export default function Random() {
       </div>
 
       {/* Random Tip */}
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4">
         <div className="flex items-start space-x-3">
-          <div className="text-xl">🎲</div>
-          <div className="text-sm text-gray-700">
+          <div className="w-8 h-8 rounded-lg bg-green-100 dark:bg-green-800/50 flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-4 h-4 text-green-600 dark:text-green-400"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 10V3L4 14h7v7l9-11h-7z"
+              />
+            </svg>
+          </div>
+          <div className="text-sm text-gray-700 dark:text-gray-300">
             <p className="font-medium mb-1">随机抽查模式</p>
-            <p>从词库中随机抽取单词进行测试，帮助你检验学习效果</p>
+            <p className="text-gray-600 dark:text-gray-400">
+              从词库中随机抽取单词进行测试，帮助你检验学习效果
+            </p>
           </div>
         </div>
       </div>

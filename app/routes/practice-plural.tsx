@@ -9,7 +9,9 @@ import {
   addFavorite,
   removeFavorite,
   isFavorite,
+  getSelectedUnits,
 } from "../utils/storageManager";
+import { filterWordsByUnits } from "../utils/unitManager";
 import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
   ChevronLeft,
@@ -74,8 +76,11 @@ export default function PracticePlural() {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
+        // 使用全局选中的单元过滤
+        const selectedUnits = getSelectedUnits();
+        const filteredData = filterWordsByUnits(data, selectedUnits);
         // 直接使用 Word 对象上的 plural 字段
-        const wordsWithPlural = data.filter(
+        const wordsWithPlural = filteredData.filter(
           (w) => w.plural && w.plural !== "-" && !w.singularOnly
         );
         const shuffled = [...wordsWithPlural].sort(() => Math.random() - 0.5);

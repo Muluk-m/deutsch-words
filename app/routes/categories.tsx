@@ -1,5 +1,5 @@
 import type { Route } from "./+types/categories";
-import { Link, useNavigate, useSearchParams } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { useState, useEffect, useMemo } from "react";
 import type { Word } from "../types/word";
 import { getLearnedWords } from "../utils/storageManager";
@@ -34,16 +34,15 @@ interface CategoryStats {
 
 export default function Categories() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
 
   const [words, setWords] = useState<Word[]>([]);
   const [learnedWords, setLearnedWords] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Filter states from URL
-  const wordType = (searchParams.get("type") as WordType) || "all";
-  const articleType = (searchParams.get("article") as ArticleType) || "all";
+  // Filter states - 使用本地 state 而不是 URL 参数，确保即时更新
+  const [wordType, setWordType] = useState<WordType>("all");
+  const [articleType, setArticleType] = useState<ArticleType>("all");
 
   useEffect(() => {
     fetch("/words.json")
@@ -101,13 +100,15 @@ export default function Categories() {
   }, [words, wordType, articleType, searchQuery]);
 
   const setFilter = (type: "type" | "article", value: string) => {
-    const newParams = new URLSearchParams(searchParams);
-    if (value === "all") {
-      newParams.delete(type);
+    if (type === "type") {
+      setWordType(value as WordType);
+      // 切换词性时重置冠词筛选
+      if (value !== "all" && value !== "noun") {
+        setArticleType("all");
+      }
     } else {
-      newParams.set(type, value);
+      setArticleType(value as ArticleType);
     }
-    setSearchParams(newParams);
   };
 
   if (loading) {
@@ -263,11 +264,11 @@ export default function Categories() {
           {filteredWords.length > 0 ? (
             <div className="bg-white dark:bg-gray-800 rounded-2xl border border-gray-100 dark:border-gray-700 overflow-hidden">
               <div className="divide-y divide-gray-100 dark:divide-gray-700 max-h-[60vh] overflow-y-auto">
-                {filteredWords.slice(0, 100).map((word) => {
+                {filteredWords.slice(0, 100).map((word, index) => {
                   const isLearned = learnedWords.includes(word.word);
                   return (
                     <Link
-                      key={word.word}
+                      key={`${word.word}-${index}`}
                       to={`/word/${encodeURIComponent(word.word)}`}
                       className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer transition-colors"
                     >
@@ -319,7 +320,9 @@ export default function Categories() {
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <Search className="w-12 h-12 text-gray-300 dark:text-gray-600 mb-3" />
-              <p className="text-gray-500 dark:text-gray-400">未找到匹配的单词</p>
+              <p className="text-gray-500 dark:text-gray-400">
+                未找到匹配的单词
+              </p>
             </div>
           )}
         </section>
@@ -348,9 +351,7 @@ function CategoryCard({
 }: CategoryCardProps) {
   const colorClasses = {
     gray: {
-      bg: active
-        ? "bg-gray-900 dark:bg-gray-100"
-        : "bg-white dark:bg-gray-800",
+      bg: active ? "bg-gray-900 dark:bg-gray-100" : "bg-white dark:bg-gray-800",
       icon: active
         ? "bg-gray-700 dark:bg-gray-300 text-white dark:text-gray-900"
         : "bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400",
@@ -362,16 +363,12 @@ function CategoryCard({
         : "text-gray-500 dark:text-gray-400",
     },
     blue: {
-      bg: active
-        ? "bg-blue-600 dark:bg-blue-500"
-        : "bg-white dark:bg-gray-800",
+      bg: active ? "bg-blue-600 dark:bg-blue-500" : "bg-white dark:bg-gray-800",
       icon: active
         ? "bg-blue-500 dark:bg-blue-400 text-white"
         : "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400",
       text: active ? "text-white" : "text-gray-900 dark:text-gray-100",
-      count: active
-        ? "text-blue-200"
-        : "text-gray-500 dark:text-gray-400",
+      count: active ? "text-blue-200" : "text-gray-500 dark:text-gray-400",
     },
     green: {
       bg: active
@@ -381,9 +378,7 @@ function CategoryCard({
         ? "bg-green-500 dark:bg-green-400 text-white"
         : "bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400",
       text: active ? "text-white" : "text-gray-900 dark:text-gray-100",
-      count: active
-        ? "text-green-200"
-        : "text-gray-500 dark:text-gray-400",
+      count: active ? "text-green-200" : "text-gray-500 dark:text-gray-400",
     },
     purple: {
       bg: active
@@ -393,9 +388,7 @@ function CategoryCard({
         ? "bg-purple-500 dark:bg-purple-400 text-white"
         : "bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400",
       text: active ? "text-white" : "text-gray-900 dark:text-gray-100",
-      count: active
-        ? "text-purple-200"
-        : "text-gray-500 dark:text-gray-400",
+      count: active ? "text-purple-200" : "text-gray-500 dark:text-gray-400",
     },
   };
 
@@ -412,7 +405,9 @@ function CategoryCard({
           : "border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600"
       }`}
     >
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${classes.icon}`}>
+      <div
+        className={`w-10 h-10 rounded-xl flex items-center justify-center ${classes.icon}`}
+      >
         <Icon className="w-5 h-5" />
       </div>
       <div className="text-left">
@@ -432,9 +427,16 @@ interface ArticleChipProps {
   color?: "blue" | "pink" | "violet";
 }
 
-function ArticleChip({ label, count, active, onClick, color }: ArticleChipProps) {
+function ArticleChip({
+  label,
+  count,
+  active,
+  onClick,
+  color,
+}: ArticleChipProps) {
   let bgClass = "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300";
-  let activeBgClass = "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900";
+  let activeBgClass =
+    "bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900";
 
   if (color === "blue") {
     bgClass = "bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400";
@@ -443,7 +445,8 @@ function ArticleChip({ label, count, active, onClick, color }: ArticleChipProps)
     bgClass = "bg-pink-50 dark:bg-pink-900/20 text-pink-600 dark:text-pink-400";
     activeBgClass = "bg-pink-600 text-white";
   } else if (color === "violet") {
-    bgClass = "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400";
+    bgClass =
+      "bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400";
     activeBgClass = "bg-violet-600 text-white";
   }
 
@@ -461,5 +464,3 @@ function ArticleChip({ label, count, active, onClick, color }: ArticleChipProps)
     </button>
   );
 }
-
-

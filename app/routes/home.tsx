@@ -2,12 +2,13 @@ import type { Route } from "./+types/home";
 import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
-import { createUnits, getUnitProgress } from "../utils/unitManager";
+import { createUnits, getUnitProgress, getUnitList, filterWordsByUnits } from "../utils/unitManager";
 import {
   getSRSProgress,
   getMistakesList,
   needsMigration,
   migrateData,
+  getSelectedUnits,
 } from "../utils/storageManager";
 import { getDueWords } from "../utils/srsAlgorithm";
 import {
@@ -17,10 +18,12 @@ import {
   BookOpen,
   ChevronRight,
   AlertTriangle,
+  Layers,
 } from "lucide-react";
 import { BottomNav } from "../components/BottomNav";
 import { LearningDashboard } from "../components/LearningDashboard";
 import { QuickActions, GrammarPractice } from "../components/QuickActions";
+import { UnitSelector } from "../components/UnitSelector";
 
 export function meta({}: Route.MetaArgs) {
   return [
@@ -40,11 +43,15 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [dueCount, setDueCount] = useState(0);
   const [mistakesCount, setMistakesCount] = useState(0);
+  const [selectedUnits, setSelectedUnits] = useState<number[] | null>(null);
 
   useEffect(() => {
     if (needsMigration()) {
       migrateData();
     }
+
+    // 读取选中的单元
+    setSelectedUnits(getSelectedUnits());
 
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
@@ -111,6 +118,15 @@ export default function Home() {
   }, [searchQuery, words]);
 
   const units = createUnits(words);
+  const unitList = getUnitList(words);
+  
+  // 根据选中单元过滤的单词数量
+  const filteredWords = filterWordsByUnits(words, selectedUnits);
+  const filteredLearnedCount = filteredWords.filter(w => learnedWords.includes(w.word)).length;
+
+  const handleUnitChange = (newSelected: number[] | null) => {
+    setSelectedUnits(newSelected);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 pb-nav">
@@ -229,10 +245,33 @@ export default function Home() {
           {/* Learning Dashboard */}
           <LearningDashboard
             todayCount={todayCount}
-            totalLearned={learnedWords.length}
-            totalWords={words.length}
+            totalLearned={filteredLearnedCount}
+            totalWords={filteredWords.length}
             dueCount={dueCount}
           />
+
+          {/* Unit Selector Card */}
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <Layers className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div>
+                  <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                    学习范围
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {filteredWords.length} 个单词
+                  </div>
+                </div>
+              </div>
+              <UnitSelector
+                units={unitList}
+                onChange={handleUnitChange}
+              />
+            </div>
+          </div>
 
           {/* Quick Actions */}
           <QuickActions />

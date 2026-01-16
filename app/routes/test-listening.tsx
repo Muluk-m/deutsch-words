@@ -13,7 +13,9 @@ import {
   addFavorite,
   removeFavorite,
   isFavorite,
+  getSelectedUnits,
 } from "../utils/storageManager";
+import { filterWordsByUnits } from "../utils/unitManager";
 import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
   ChevronLeft,
@@ -91,7 +93,9 @@ export default function TestListening() {
         } else if (unit) {
           wordsToTest = getUnitWords(data, parseInt(unit));
         } else {
-          wordsToTest = data;
+          // 使用全局选中的单元过滤
+          const selectedUnits = getSelectedUnits();
+          wordsToTest = filterWordsByUnits(data, selectedUnits);
         }
 
         const shuffled = [...wordsToTest].sort(() => Math.random() - 0.5);

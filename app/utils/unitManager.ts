@@ -90,3 +90,27 @@ export function getAllUnitsProgress(learnedWords: string[], allWords: Word[]) {
   }));
 }
 
+/**
+ * 根据选中的单元过滤单词
+ * @param words 所有单词
+ * @param selectedUnits 选中的单元 ID 数组，null 表示全部
+ */
+export function filterWordsByUnits(words: Word[], selectedUnits: number[] | null): Word[] {
+  if (!selectedUnits || selectedUnits.length === 0) {
+    return words;
+  }
+  return words.filter((word) => selectedUnits.includes(word.unitId || 1));
+}
+
+/**
+ * 获取单元列表（用于选择器）
+ */
+export function getUnitList(words: Word[]): Array<{ id: number; name: string; wordCount: number }> {
+  const units = createUnits(words);
+  return units.map((unit) => ({
+    id: unit.id,
+    name: unit.name,
+    wordCount: unit.totalWords,
+  }));
+}
+

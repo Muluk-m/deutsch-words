@@ -9,7 +9,9 @@ import {
   getMistakesList,
   getLearnedWords,
   recordStudySession,
+  getSelectedUnits,
 } from "../utils/storageManager";
+import { filterWordsByUnits } from "../utils/unitManager";
 import {
   ChevronLeft,
   Volume2,
@@ -82,8 +84,11 @@ export default function Flashcard() {
           mistakes.some((m) => m.word === w.word)
         );
       } else {
-        // All words - shuffle and take count
-        selectedWords = [...wordsData].sort(() => Math.random() - 0.5);
+        // 使用全局选中的单元过滤
+        const globalSelectedUnits = getSelectedUnits();
+        selectedWords = filterWordsByUnits(wordsData, globalSelectedUnits);
+        // Shuffle
+        selectedWords = [...selectedWords].sort(() => Math.random() - 0.5);
       }
 
       // Limit to count

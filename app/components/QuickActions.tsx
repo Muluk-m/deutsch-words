@@ -21,15 +21,15 @@ interface QuickAction {
 
 const quickActions: QuickAction[] = [
   {
-    title: "继续学习",
-    description: "从上次进度继续",
+    title: "随机学习",
+    description: "打乱顺序练习",
     icon: BookOpen,
-    path: "/learn",
+    path: "/random",
     color: "text-blue-600",
     gradient: "from-blue-500 to-blue-600",
   },
   {
-    title: "闪卡复习",
+    title: "闪卡模式",
     description: "快速翻卡记忆",
     icon: Layers,
     path: "/flashcard",

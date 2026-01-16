@@ -8,7 +8,9 @@ import {
   addFavorite,
   removeFavorite,
   isFavorite,
+  getSelectedUnits,
 } from "../utils/storageManager";
+import { filterWordsByUnits } from "../utils/unitManager";
 import { conjugateVerb } from "../utils/verbConjugator";
 import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
@@ -177,8 +179,12 @@ export default function PracticeVerbs() {
     fetch("/words.json")
       .then((res) => res.json() as Promise<Word[]>)
       .then((data) => {
+        // 使用全局选中的单元过滤
+        const selectedUnits = getSelectedUnits();
+        const filteredData = filterWordsByUnits(data, selectedUnits);
+        
         // 获取所有动词
-        const allVerbs = data.filter((w) => w.wordType === "verb");
+        const allVerbs = filteredData.filter((w) => w.wordType === "verb");
         
         // 为每个动词生成或使用现有变位
         const verbsWithConjugation: Array<Word & { verbConjugation: VerbConjugation }> = [];
