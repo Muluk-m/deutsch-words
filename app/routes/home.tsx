@@ -49,6 +49,7 @@ export default function Home() {
   const [dueCount, setDueCount] = useState(0);
   const [mistakesCount, setMistakesCount] = useState(0);
   const [selectedUnits, setSelectedUnits] = useState<number[] | null>(null);
+  const [isComposing, setIsComposing] = useState(false); // 跟踪输入法组合状态
 
   useEffect(() => {
     if (needsMigration()) {
@@ -82,8 +83,13 @@ export default function Home() {
       });
   }, []);
 
-  // 搜索功能
+  // 搜索功能 - 在输入法组合期间不触发搜索
   useEffect(() => {
+    // 如果正在使用输入法组合，不进行搜索
+    if (isComposing) {
+      return;
+    }
+
     if (!searchQuery.trim()) {
       setSearchResults([]);
       setIsSearching(false);
@@ -120,7 +126,7 @@ export default function Home() {
     });
 
     setSearchResults(matchedWords.slice(0, 20));
-  }, [searchQuery, words]);
+  }, [searchQuery, words, isComposing]);
 
   const units = createUnits(words);
   const unitList = getUnitList(words);
@@ -176,6 +182,12 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={(e) => {
+                setIsComposing(false);
+                // 组合结束时，确保使用最终的值进行搜索
+                setSearchQuery((e.target as HTMLInputElement).value);
+              }}
               placeholder="搜索单词..."
               className="w-full h-10 pl-10 pr-10 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
             />
