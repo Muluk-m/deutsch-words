@@ -346,13 +346,29 @@ function LearnMode({
           </div>
         )}
 
-        {/* Pronunciation Button */}
-        <button
-          onClick={() => speak(word.word)}
-          className="w-14 h-14 rounded-full flex items-center justify-center mb-8 cursor-pointer transition-all active:scale-90 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
-        >
-          <Volume2 className="w-6 h-6" />
-        </button>
+        {/* Pronunciation Buttons */}
+        <div className="flex items-center justify-center gap-4 mb-8">
+          <div className="flex flex-col items-center">
+            <button
+              onClick={() => speak(word.article ? `${word.article} ${word.word}` : word.word)}
+              className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-blue-100 dark:bg-blue-900/30 hover:bg-blue-200 dark:hover:bg-blue-900/50 text-blue-600 dark:text-blue-400"
+            >
+              <Volume2 className="w-6 h-6" />
+            </button>
+            <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">单数</span>
+          </div>
+          {pluralForm && (
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => speak(`die ${pluralForm}`)}
+                className="w-14 h-14 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-violet-100 dark:bg-violet-900/30 hover:bg-violet-200 dark:hover:bg-violet-900/50 text-violet-600 dark:text-violet-400"
+              >
+                <Volume2 className="w-6 h-6" />
+              </button>
+              <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">复数</span>
+            </div>
+          )}
+        </div>
 
         {/* Chinese Meaning Toggle */}
         <div className="w-full max-w-sm">

@@ -1,19 +1,20 @@
-import { parseGermanWord } from "../utils/wordParser";
+import { parseWord } from "../utils/wordParser";
 import { usePronunciation } from "../hooks/usePronunciation";
+import type { Word } from "../types/word";
 
 interface PronunciationButtonsProps {
-  word: string;
+  wordObj: Word;
   singularColor?: "purple" | "blue" | "green";
   pluralColor?: "pink" | "purple" | "emerald";
 }
 
 export function PronunciationButtons({
-  word,
+  wordObj,
   singularColor = "purple",
   pluralColor = "pink",
 }: PronunciationButtonsProps) {
-  const { pronounceSingular, pronouncePlural } = usePronunciation();
-  const parsed = parseGermanWord(word);
+  const { pronounce } = usePronunciation();
+  const parsed = parseWord(wordObj);
 
   const singularColorClasses = {
     purple: "bg-gradient-to-br from-purple-400 to-purple-600 hover:from-purple-500 hover:to-purple-700",
@@ -31,13 +32,13 @@ export function PronunciationButtons({
     <div className="flex items-center justify-center gap-6 my-6">
       <div className="flex flex-col items-center group">
         <button
-          onClick={() => pronounceSingular(word)}
+          onClick={() => pronounce(parsed.singularForPronunciation)}
           className={`w-16 h-16 ${singularColorClasses[singularColor]} 
             rounded-2xl flex items-center justify-center 
             transition-all duration-200 
             active:scale-90 hover:scale-110
             shadow-lg hover:shadow-xl
-            text-white`}
+            text-white cursor-pointer`}
         >
           <svg
             className="w-7 h-7"
@@ -55,13 +56,13 @@ export function PronunciationButtons({
       {parsed.pluralForPronunciation && (
         <div className="flex flex-col items-center group">
           <button
-            onClick={() => pronouncePlural(word)}
+            onClick={() => pronounce(parsed.pluralForPronunciation!)}
             className={`w-16 h-16 ${pluralColorClasses[pluralColor]} 
               rounded-2xl flex items-center justify-center 
               transition-all duration-200 
               active:scale-90 hover:scale-110
               shadow-lg hover:shadow-xl
-              text-white`}
+              text-white cursor-pointer`}
           >
             <svg
               className="w-7 h-7"

@@ -195,7 +195,7 @@ export default function Review() {
           {/* 发音按钮 */}
           <div className="mb-6">
             <PronunciationButtons
-              word={currentWord.word}
+              wordObj={currentWord}
               singularColor="purple"
               pluralColor="pink"
             />

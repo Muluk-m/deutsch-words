@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams, Link } from "react-router";
 import { useState, useEffect, useCallback, useRef } from "react";
 import type { Word } from "../types/word";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { buildPluralForm } from "../utils/wordParser";
 import { getUnitWords } from "../utils/unitManager";
 import {
   getFavoritesList,
@@ -439,16 +440,44 @@ export default function Flashcard() {
                   [{currentCard.phonetic}]
                 </p>
               )}
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (currentCard) pronounce(currentCard.word);
-                }}
-                className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-              >
-                <Volume2 className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              </button>
-              <p className="text-sm text-gray-400 dark:text-gray-500 mt-6">
+              {/* Pronunciation Buttons */}
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (currentCard) {
+                        const text = currentCard.article 
+                          ? `${currentCard.article} ${currentCard.word}` 
+                          : currentCard.word;
+                        pronounce(text);
+                      }
+                    }}
+                    className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                  >
+                    <Volume2 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                  </button>
+                  <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">单数</span>
+                </div>
+                {currentCard?.plural && currentCard.plural !== "-" && !currentCard.singularOnly && (
+                  <div className="flex flex-col items-center">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (currentCard) {
+                          const pluralForm = buildPluralForm(currentCard.word, currentCard.plural!);
+                          pronounce(`die ${pluralForm}`);
+                        }
+                      }}
+                      className="w-12 h-12 rounded-full bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center cursor-pointer hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
+                    >
+                      <Volume2 className="w-5 h-5 text-violet-600 dark:text-violet-400" />
+                    </button>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">复数</span>
+                  </div>
+                )}
+              </div>
+              <p className="text-sm text-gray-400 dark:text-gray-500 mt-4">
                 点击翻转查看释义
               </p>
             </div>

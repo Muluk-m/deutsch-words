@@ -16,7 +16,8 @@ import {
   removeFavorite,
 } from "../utils/storageManager";
 import { usePronunciation } from "../hooks/usePronunciation";
-import type { FavoriteWord } from "../types/word";
+import { buildPluralForm } from "../utils/wordParser";
+import type { FavoriteWord, Word } from "../types/word";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "生词本 - Deutsch Wörter" }];
@@ -26,6 +27,7 @@ export default function Favorites() {
   const navigate = useNavigate();
   const { pronounce } = usePronunciation();
   const [favorites, setFavorites] = useState<FavoriteWord[]>([]);
+  const [allWords, setAllWords] = useState<Word[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(
     null
@@ -33,10 +35,19 @@ export default function Favorites() {
 
   useEffect(() => {
     loadFavorites();
+    // 加载完整的单词数据以获取复数信息
+    fetch("/words.json")
+      .then((res) => res.json() as Promise<Word[]>)
+      .then((data) => setAllWords(data));
   }, []);
 
   const loadFavorites = () => {
     setFavorites(getFavoritesList());
+  };
+
+  // 查找完整的 Word 数据
+  const getFullWordData = (wordStr: string): Word | undefined => {
+    return allWords.find((w) => w.word === wordStr);
   };
 
   const handleRemove = (word: string) => {
@@ -142,19 +153,45 @@ export default function Favorites() {
 
             {/* 生词列表 */}
             <div className="space-y-2">
-              {filteredFavorites.map((fav) => (
+              {filteredFavorites.map((fav) => {
+                const fullWord = getFullWordData(fav.word);
+                const hasPluralPronunciation = fullWord?.plural && 
+                  fullWord.plural !== "-" && 
+                  !fullWord.singularOnly;
+                
+                return (
                 <div
                   key={fav.word}
                   className="bg-white dark:bg-gray-800 rounded-2xl p-4 border border-gray-100 dark:border-gray-700"
                 >
                   <div className="flex items-start gap-3">
                     {/* 发音按钮 */}
-                    <button
-                      onClick={() => pronounce(fav.word)}
-                      className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors flex-shrink-0"
-                    >
-                      <Volume2 className="w-5 h-5" />
-                    </button>
+                    <div className="flex flex-col gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          const text = fullWord?.article 
+                            ? `${fullWord.article} ${fav.word}` 
+                            : fav.word;
+                          pronounce(text);
+                        }}
+                        className="w-10 h-10 rounded-xl bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        title="单数发音"
+                      >
+                        <Volume2 className="w-5 h-5" />
+                      </button>
+                      {hasPluralPronunciation && (
+                        <button
+                          onClick={() => {
+                            const pluralForm = buildPluralForm(fav.word, fullWord!.plural!);
+                            pronounce(`die ${pluralForm}`);
+                          }}
+                          className="w-10 h-10 rounded-xl bg-violet-100 dark:bg-violet-900/30 flex items-center justify-center text-violet-600 dark:text-violet-400 cursor-pointer hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
+                          title="复数发音"
+                        >
+                          <Volume2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
 
                     {/* 单词信息 */}
                     <div className="flex-1 min-w-0">
@@ -162,6 +199,17 @@ export default function Favorites() {
                         <span className="text-lg font-bold text-gray-900 dark:text-gray-100">
                           {fav.word}
                         </span>
+                        {fullWord?.article && (
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            fullWord.article === "der"
+                              ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                              : fullWord.article === "die"
+                              ? "bg-pink-100 dark:bg-pink-900/30 text-pink-600 dark:text-pink-400"
+                              : "bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400"
+                          }`}>
+                            {fullWord.article}
+                          </span>
+                        )}
                         <span className="text-xs text-gray-400 dark:text-gray-500">
                           {formatDate(fav.addedAt)}
                         </span>
@@ -169,6 +217,11 @@ export default function Favorites() {
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {fav.zh_cn}
                       </p>
+                      {hasPluralPronunciation && (
+                        <p className="text-xs text-violet-500 dark:text-violet-400 mt-1">
+                          复数: {buildPluralForm(fav.word, fullWord!.plural!)}
+                        </p>
+                      )}
                       {fav.note && (
                         <p className="text-xs text-gray-500 dark:text-gray-500 mt-1 italic">
                           备注: {fav.note}
@@ -185,24 +238,25 @@ export default function Favorites() {
                         >
                           确认
                         </button>
-                        <button
-                          onClick={() => setShowConfirmDelete(null)}
-                          className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg cursor-pointer"
-                        >
-                          取消
-                        </button>
-                      </div>
-                    ) : (
                       <button
-                        onClick={() => setShowConfirmDelete(fav.word)}
-                        className="p-2 text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
+                        onClick={() => setShowConfirmDelete(null)}
+                        className="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs font-medium rounded-lg cursor-pointer"
                       >
-                        <Trash2 className="w-5 h-5" />
+                        取消
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowConfirmDelete(fav.word)}
+                      className="p-2 text-gray-400 hover:text-red-500 cursor-pointer transition-colors"
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
-              ))}
+              </div>
+              );
+            })}
             </div>
 
             {/* 搜索无结果 */}

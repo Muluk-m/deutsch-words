@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import type { Word } from "../types/word";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { buildPluralForm } from "../utils/wordParser";
 import { recordStudySession, addMistake } from "../utils/storageManager";
 import {
   ChevronLeft,
@@ -478,16 +479,35 @@ export default function PracticeConfusables() {
                   <XCircle className="w-6 h-6 text-red-500 flex-shrink-0" />
                 )}
 
-                {/* Pronunciation Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    pronounce(option.word);
-                  }}
-                  className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                >
-                  <Volume2 className="w-5 h-5" />
-                </button>
+                {/* Pronunciation Buttons */}
+                <div className="flex gap-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const text = option.article 
+                        ? `${option.article} ${option.word}` 
+                        : option.word;
+                      pronounce(text);
+                    }}
+                    className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 cursor-pointer hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                    title="单数发音"
+                  >
+                    <Volume2 className="w-5 h-5" />
+                  </button>
+                  {option.plural && option.plural !== "-" && !option.singularOnly && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const pluralForm = buildPluralForm(option.word, option.plural!);
+                        pronounce(`die ${pluralForm}`);
+                      }}
+                      className="p-2 rounded-lg bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 cursor-pointer hover:bg-violet-200 dark:hover:bg-violet-900/50 transition-colors"
+                      title="复数发音"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
               </button>
             );
           })}

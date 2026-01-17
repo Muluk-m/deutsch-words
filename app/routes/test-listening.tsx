@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { buildPluralForm } from "../utils/wordParser";
 import { getUnitWords } from "../utils/unitManager";
 import {
   getMistakesList,
@@ -343,14 +344,26 @@ export default function TestListening() {
           </p>
 
           {/* Play Buttons */}
-          <div className="flex gap-3 justify-center mb-4">
+          <div className="flex flex-wrap gap-3 justify-center mb-4">
             <button
               onClick={() => pronounce(currentWord.word)}
               className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl font-medium cursor-pointer active:scale-95 transition-transform"
             >
               <Volume2 className="w-5 h-5" />
-              播放发音
+              单数发音
             </button>
+            {currentWord.plural && currentWord.plural !== "-" && !currentWord.singularOnly && (
+              <button
+                onClick={() => {
+                  const pluralForm = buildPluralForm(currentWord.word, currentWord.plural!);
+                  pronounce(`die ${pluralForm}`);
+                }}
+                className="flex items-center gap-2 px-5 py-3 bg-violet-600 text-white rounded-xl font-medium cursor-pointer active:scale-95 transition-transform"
+              >
+                <Volume2 className="w-5 h-5" />
+                复数发音
+              </button>
+            )}
             <button
               onClick={() => setAutoPlayEnabled(!autoPlayEnabled)}
               className={`flex items-center gap-2 px-4 py-3 rounded-xl font-medium cursor-pointer transition-colors ${

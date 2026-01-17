@@ -3,6 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router";
 import { useState, useEffect } from "react";
 import type { Word } from "../types/word";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { buildPluralForm } from "../utils/wordParser";
 import { getUnitWords } from "../utils/unitManager";
 import {
   getMistakesList,
@@ -295,14 +296,36 @@ export default function TestChoice() {
             {currentWord.zh_cn}
           </h2>
           
-          {/* Pronunciation Button */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => pronounce(currentWord.word)}
-              className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
-            >
-              <Volume2 className="w-5 h-5" />
-            </button>
+          {/* Pronunciation Buttons */}
+          <div className="flex justify-center gap-3">
+            <div className="flex flex-col items-center">
+              <button
+                onClick={() => {
+                  const text = currentWord.article 
+                    ? `${currentWord.article} ${currentWord.word}` 
+                    : currentWord.word;
+                  pronounce(text);
+                }}
+                className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+              >
+                <Volume2 className="w-5 h-5" />
+              </button>
+              <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">单数</span>
+            </div>
+            {currentWord.plural && currentWord.plural !== "-" && !currentWord.singularOnly && (
+              <div className="flex flex-col items-center">
+                <button
+                  onClick={() => {
+                    const pluralForm = buildPluralForm(currentWord.word, currentWord.plural!);
+                    pronounce(`die ${pluralForm}`);
+                  }}
+                  className="w-11 h-11 rounded-full flex items-center justify-center cursor-pointer transition-all active:scale-90 bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 hover:bg-violet-200 dark:hover:bg-violet-900/50"
+                >
+                  <Volume2 className="w-5 h-5" />
+                </button>
+                <span className="text-xs text-gray-400 dark:text-gray-500 mt-1">复数</span>
+              </div>
+            )}
           </div>
         </div>
 

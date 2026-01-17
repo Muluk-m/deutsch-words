@@ -159,7 +159,7 @@ export default function Random() {
           {/* 发音按钮 */}
           <div className="mb-6">
             <PronunciationButtons
-              word={currentWord.word}
+              wordObj={currentWord}
               singularColor="green"
               pluralColor="emerald"
             />
