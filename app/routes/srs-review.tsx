@@ -1,10 +1,11 @@
 import type { Route } from "./+types/srs-review";
 import { Link, useNavigate } from "react-router";
 import { useState, useEffect, useRef } from "react";
-import type { Word, WordSRSProgress } from "../types/word";
+import type { WordSRSProgress } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { useWords } from "../contexts/WordsContext";
 import { buildPluralForm } from "../utils/wordParser";
 import {
   getSRSProgress,
@@ -48,7 +49,10 @@ export function meta({}: Route.MetaArgs) {
 export default function SRSReview() {
   const navigate = useNavigate();
   const inputRef = useRef<HTMLInputElement>(null);
-  const [allWords, setAllWords] = useState<Word[]>([]);
+  
+  // 使用全局词库 Context
+  const { words: allWords, getWordByName, isLoading } = useWords();
+  
   const [dueWords, setDueWords] = useState<WordSRSProgress[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -78,7 +82,7 @@ export default function SRSReview() {
 
   const currentProgress = dueWords[currentIndex];
   const currentWord = currentProgress
-    ? allWords.find((w) => w.word === currentProgress.word)
+    ? getWordByName(currentProgress.word)
     : null;
 
   // 检查当前单词是否在生词本中
@@ -111,14 +115,10 @@ export default function SRSReview() {
   useEffect(() => {
     if (needsMigration()) migrateData();
 
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        setAllWords(data);
-        const srsProgress = getSRSProgress();
-        const due = getDueWords(srsProgress);
-        setDueWords(due);
-      });
+    // 词库从 Context 获取，只需初始化 SRS 数据
+    const srsProgress = getSRSProgress();
+    const due = getDueWords(srsProgress);
+    setDueWords(due);
   }, []);
 
   const handleCheckAnswer = () => {

@@ -16,8 +16,9 @@ import {
   removeFavorite,
 } from "../utils/storageManager";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { useWords } from "../contexts/WordsContext";
 import { buildPluralForm } from "../utils/wordParser";
-import type { FavoriteWord, Word } from "../types/word";
+import type { FavoriteWord } from "../types/word";
 
 export function meta({}: Route.MetaArgs) {
   return [{ title: "生词本 - Deutsch Wörter" }];
@@ -26,8 +27,11 @@ export function meta({}: Route.MetaArgs) {
 export default function Favorites() {
   const navigate = useNavigate();
   const { pronounce } = usePronunciation();
+  
+  // 使用全局词库 Context
+  const { getWordByName } = useWords();
+  
   const [favorites, setFavorites] = useState<FavoriteWord[]>([]);
-  const [allWords, setAllWords] = useState<Word[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showConfirmDelete, setShowConfirmDelete] = useState<string | null>(
     null
@@ -35,20 +39,14 @@ export default function Favorites() {
 
   useEffect(() => {
     loadFavorites();
-    // 加载完整的单词数据以获取复数信息
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => setAllWords(data));
   }, []);
 
   const loadFavorites = () => {
     setFavorites(getFavoritesList());
   };
 
-  // 查找完整的 Word 数据
-  const getFullWordData = (wordStr: string): Word | undefined => {
-    return allWords.find((w) => w.word === wordStr);
-  };
+  // 查找完整的 Word 数据（使用 Context）
+  const getFullWordData = getWordByName;
 
   const handleRemove = (word: string) => {
     removeFavorite(word);

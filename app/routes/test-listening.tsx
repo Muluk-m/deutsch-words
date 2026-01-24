@@ -1,11 +1,11 @@
 import type { Route } from "./+types/test-listening";
 import { Link, useSearchParams, useNavigate } from "react-router";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePronunciation } from "../hooks/usePronunciation";
+import { useWords } from "../contexts/WordsContext";
 import { buildPluralForm } from "../utils/wordParser";
-import { getUnitWords } from "../utils/unitManager";
 import {
   getMistakesList,
   addMistake,
@@ -16,7 +16,6 @@ import {
   isFavorite,
   getSelectedUnits,
 } from "../utils/storageManager";
-import { filterWordsByUnits } from "../utils/unitManager";
 import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
   ChevronLeft,
@@ -45,6 +44,9 @@ export default function TestListening() {
   const unit = searchParams.get("unit");
   const count = parseInt(searchParams.get("count") || "20");
   const source = searchParams.get("source");
+
+  // 使用全局词库 Context
+  const { words: allWords, getWordsByUnit, filterByUnits, isLoading } = useWords();
 
   const [testWords, setTestWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -81,28 +83,27 @@ export default function TestListening() {
     }
   };
 
+  // 初始化测试单词
   useEffect(() => {
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        let wordsToTest: Word[];
+    if (allWords.length === 0) return;
 
-        if (source === "mistakes") {
-          const mistakes = getMistakesList();
-          const mistakeWords = mistakes.map((m) => m.word);
-          wordsToTest = data.filter((w) => mistakeWords.includes(w.word));
-        } else if (unit) {
-          wordsToTest = getUnitWords(data, parseInt(unit));
-        } else {
-          // 使用全局选中的单元过滤
-          const selectedUnits = getSelectedUnits();
-          wordsToTest = filterWordsByUnits(data, selectedUnits);
-        }
+    let wordsToTest: Word[];
 
-        const shuffled = [...wordsToTest].sort(() => Math.random() - 0.5);
-        setTestWords(shuffled.slice(0, Math.min(count, shuffled.length)));
-      });
-  }, [unit, count, source]);
+    if (source === "mistakes") {
+      const mistakes = getMistakesList();
+      const mistakeWords = mistakes.map((m) => m.word);
+      wordsToTest = allWords.filter((w) => mistakeWords.includes(w.word));
+    } else if (unit) {
+      wordsToTest = getWordsByUnit(parseInt(unit));
+    } else {
+      // 使用全局选中的单元过滤
+      const selectedUnits = getSelectedUnits();
+      wordsToTest = filterByUnits(selectedUnits);
+    }
+
+    const shuffled = [...wordsToTest].sort(() => Math.random() - 0.5);
+    setTestWords(shuffled.slice(0, Math.min(count, shuffled.length)));
+  }, [allWords, unit, count, source, getWordsByUnit, filterByUnits]);
 
   useEffect(() => {
     if (currentWord && autoPlayEnabled && isCorrect === null) {

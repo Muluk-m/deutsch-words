@@ -3,7 +3,7 @@ import { Link, useSearchParams, useNavigate } from "react-router";
 import { useState, useEffect, useRef } from "react";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
-import { getUnitWords } from "../utils/unitManager";
+import { useWords } from "../contexts/WordsContext";
 import {
   getMistakesList,
   addMistake,
@@ -40,6 +40,9 @@ export default function TestCnToDe() {
   const count = parseInt(searchParams.get("count") || "20");
   const source = searchParams.get("source");
 
+  // 使用全局词库 Context
+  const { words: allWords, getWordsByUnit, isLoading } = useWords();
+
   const [testWords, setTestWords] = useState<Word[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userInput, setUserInput] = useState("");
@@ -72,26 +75,25 @@ export default function TestCnToDe() {
     }
   };
 
+  // 初始化测试单词
   useEffect(() => {
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        let wordsToTest: Word[];
+    if (allWords.length === 0) return;
 
-        if (source === "mistakes") {
-          const mistakes = getMistakesList();
-          const mistakeWords = mistakes.map((m) => m.word);
-          wordsToTest = data.filter((w) => mistakeWords.includes(w.word));
-        } else if (unit) {
-          wordsToTest = getUnitWords(data, parseInt(unit));
-        } else {
-          wordsToTest = data;
-        }
+    let wordsToTest: Word[];
 
-        const shuffled = [...wordsToTest].sort(() => Math.random() - 0.5);
-        setTestWords(shuffled.slice(0, Math.min(count, shuffled.length)));
-      });
-  }, [unit, count, source]);
+    if (source === "mistakes") {
+      const mistakes = getMistakesList();
+      const mistakeWords = mistakes.map((m) => m.word);
+      wordsToTest = allWords.filter((w) => mistakeWords.includes(w.word));
+    } else if (unit) {
+      wordsToTest = getWordsByUnit(parseInt(unit));
+    } else {
+      wordsToTest = allWords;
+    }
+
+    const shuffled = [...wordsToTest].sort(() => Math.random() - 0.5);
+    setTestWords(shuffled.slice(0, Math.min(count, shuffled.length)));
+  }, [allWords, unit, count, source, getWordsByUnit]);
 
   const handleCheckAnswer = () => {
     if (!currentWord) return;

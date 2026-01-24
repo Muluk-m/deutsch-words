@@ -11,6 +11,7 @@ import { useEffect } from "react";
 import type { Route } from "./+types/root";
 import "./app.css";
 import { initializeApp } from "./utils/initializeApp";
+import { WordsProvider } from "./contexts/WordsContext";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -117,7 +118,11 @@ export default function App() {
     }
   }, []);
 
-  return <Outlet />;
+  return (
+    <WordsProvider>
+      <Outlet />
+    </WordsProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

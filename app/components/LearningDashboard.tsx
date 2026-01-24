@@ -1,4 +1,5 @@
-import { Trophy, Flame, Target, BookOpen, TrendingUp } from "lucide-react";
+import { Trophy, Flame, Target, BookOpen, CheckCircle, Sparkles } from "lucide-react";
+import { useState, useEffect } from "react";
 
 interface LearningDashboardProps {
   todayCount: number;
@@ -6,6 +7,8 @@ interface LearningDashboardProps {
   totalWords: number;
   dueCount: number;
   streakDays?: number;
+  dailyGoal?: number;
+  onGoalComplete?: () => void;
 }
 
 export function LearningDashboard({
@@ -14,11 +17,42 @@ export function LearningDashboard({
   totalWords,
   dueCount,
   streakDays = 0,
+  dailyGoal = 20,
+  onGoalComplete,
 }: LearningDashboardProps) {
   const progressPercentage = totalWords > 0 ? Math.round((totalLearned / totalWords) * 100) : 0;
+  const goalProgress = Math.min((todayCount / dailyGoal) * 100, 100);
+  const isGoalCompleted = todayCount >= dailyGoal;
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [hasShownCelebration, setHasShownCelebration] = useState(false);
+
+  // 目标达成庆祝动画
+  useEffect(() => {
+    if (isGoalCompleted && !hasShownCelebration) {
+      setShowCelebration(true);
+      setHasShownCelebration(true);
+      onGoalComplete?.();
+      const timer = setTimeout(() => setShowCelebration(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [isGoalCompleted, hasShownCelebration, onGoalComplete]);
   
   return (
     <div className="space-y-4">
+      {/* 庆祝动画 */}
+      {showCelebration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none">
+          <div className="animate-bounce text-center">
+            <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-pulse">
+              <Trophy className="w-12 h-12 text-white" />
+            </div>
+            <p className="text-2xl font-bold text-gray-900 dark:text-gray-100 bg-white/90 dark:bg-gray-900/90 px-6 py-2 rounded-full">
+              今日目标达成！
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Main Progress Card */}
       <div className="relative overflow-hidden bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl p-6 text-white">
         {/* Background Pattern */}
@@ -53,6 +87,53 @@ export function LearningDashboard({
             <span className="text-blue-200">已掌握 {totalLearned} 个</span>
             <span className="text-blue-200">共 {totalWords} 个单词</span>
           </div>
+        </div>
+      </div>
+
+      {/* 每日目标卡片 */}
+      <div className={`rounded-2xl p-4 border transition-all ${
+        isGoalCompleted 
+          ? "bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 border-green-200 dark:border-green-800" 
+          : "bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700"
+      }`}>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+              isGoalCompleted 
+                ? "bg-green-100 dark:bg-green-900/30" 
+                : "bg-blue-100 dark:bg-blue-900/30"
+            }`}>
+              {isGoalCompleted ? (
+                <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+              ) : (
+                <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              )}
+            </div>
+            <div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                每日目标
+              </div>
+              <div className="text-xs text-gray-500 dark:text-gray-400">
+                {todayCount} / {dailyGoal} 个单词
+              </div>
+            </div>
+          </div>
+          {isGoalCompleted && (
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full text-xs font-medium">
+              <Sparkles className="w-3.5 h-3.5" />
+              已达成
+            </div>
+          )}
+        </div>
+        <div className="h-2.5 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+          <div 
+            className={`h-full rounded-full transition-all duration-500 ${
+              isGoalCompleted 
+                ? "bg-gradient-to-r from-green-400 to-emerald-500" 
+                : "bg-gradient-to-r from-blue-500 to-blue-600"
+            }`}
+            style={{ width: `${goalProgress}%` }}
+          />
         </div>
       </div>
       

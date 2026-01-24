@@ -1,10 +1,10 @@
 import type { Route } from "./+types/random";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
-import { getUnitWords, filterWordsByUnits } from "../utils/unitManager";
+import { useWords } from "../contexts/WordsContext";
 import { getSelectedUnits } from "../utils/storageManager";
 import { PageContainer } from "../components/PageContainer";
 import { BackButton } from "../components/BackButton";
@@ -21,12 +21,23 @@ export default function Random() {
   const [searchParams] = useSearchParams();
   const unitId = searchParams.get("unit");
 
-  const [allWords, setAllWords] = useState<Word[]>([]);
+  // 使用全局词库 Context
+  const { words: contextWords, getWordsByUnit, filterByUnits, isLoading } = useWords();
+
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [userInput, setUserInput] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [usedIndices, setUsedIndices] = useState<Set<number>>(new Set());
+
+  // 根据 unitId 获取要测试的单词
+  const allWords = useMemo(() => {
+    if (unitId) {
+      return getWordsByUnit(parseInt(unitId));
+    }
+    const selectedUnits = getSelectedUnits();
+    return filterByUnits(selectedUnits);
+  }, [unitId, contextWords, getWordsByUnit, filterByUnits]);
 
   const { checkAnswer } = useAnswerCheck();
   const { phonetic } = usePhonetics(
@@ -51,25 +62,13 @@ export default function Random() {
     setUsedIndices(new Set([...used, randomIndex]));
   };
 
+  // 初始化随机单词
   useEffect(() => {
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        // 根据是否有 unitId 参数来决定测试哪些单词
-        let wordsToTest: Word[];
-        if (unitId) {
-          wordsToTest = getUnitWords(data, parseInt(unitId));
-        } else {
-          // 使用全局选中的单元过滤
-          const selectedUnits = getSelectedUnits();
-          wordsToTest = filterWordsByUnits(data, selectedUnits);
-        }
-
-        setAllWords(wordsToTest);
-        pickRandomWord(wordsToTest, new Set());
-      });
+    if (allWords.length > 0 && !currentWord) {
+      pickRandomWord(allWords, new Set());
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [unitId]);
+  }, [allWords]);
 
   const handleCheckAnswer = () => {
     if (!currentWord) return;

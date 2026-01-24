@@ -1,12 +1,12 @@
 import type { Route } from "./+types/learn";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router";
 import { buildPluralForm } from "../utils/wordParser";
 import type { Word } from "../types/word";
 import { useAnswerCheck } from "../hooks/useAnswerCheck";
 import { usePhonetics } from "../hooks/usePhonetics";
 import { usePronunciation } from "../hooks/usePronunciation";
-import { getUnitWords } from "../utils/unitManager";
+import { useWords } from "../contexts/WordsContext";
 import { GermanKeyboardCompact } from "../components/GermanKeyboard";
 import {
   ChevronLeft,
@@ -33,13 +33,23 @@ export default function Learn() {
   const unitId = searchParams.get("unit");
   const indexParam = searchParams.get("index");
 
-  const [words, setWords] = useState<Word[]>([]);
+  // 使用全局词库 Context
+  const { words: allWords, getWordsByUnit, isLoading } = useWords();
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showChinese, setShowChinese] = useState(false);
   const [mode, setMode] = useState<"learn" | "test">("learn");
   const [userInput, setUserInput] = useState("");
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   const [learnedWords, setLearnedWords] = useState<string[]>([]);
+
+  // 根据 unitId 获取要学习的单词
+  const words = useMemo(() => {
+    if (unitId) {
+      return getWordsByUnit(parseInt(unitId));
+    }
+    return allWords;
+  }, [unitId, allWords, getWordsByUnit]);
 
   const { checkAnswer } = useAnswerCheck();
   const currentWord = words[currentIndex];
@@ -51,39 +61,30 @@ export default function Learn() {
 
   const { pronounce } = usePronunciation();
 
+  // 初始化学习进度
   useEffect(() => {
-    fetch("/words.json")
-      .then((res) => res.json() as Promise<Word[]>)
-      .then((data) => {
-        let wordsToLearn: Word[];
-        if (unitId) {
-          wordsToLearn = getUnitWords(data, parseInt(unitId));
-        } else {
-          wordsToLearn = data;
-        }
-        setWords(wordsToLearn);
+    const learned = JSON.parse(
+      localStorage.getItem("learnedWords") || "[]"
+    ) as string[];
+    setLearnedWords(learned);
 
-        const learned = JSON.parse(
-          localStorage.getItem("learnedWords") || "[]"
-        ) as string[];
-        setLearnedWords(learned);
+    if (words.length === 0) return;
 
-        if (indexParam !== null) {
-          const targetIndex = parseInt(indexParam);
-          if (targetIndex >= 0 && targetIndex < wordsToLearn.length) {
-            setCurrentIndex(targetIndex);
-            return;
-          }
-        }
+    if (indexParam !== null) {
+      const targetIndex = parseInt(indexParam);
+      if (targetIndex >= 0 && targetIndex < words.length) {
+        setCurrentIndex(targetIndex);
+        return;
+      }
+    }
 
-        const firstUnlearned = wordsToLearn.findIndex(
-          (w: Word) => !learned.includes(w.word)
-        );
-        if (firstUnlearned !== -1) {
-          setCurrentIndex(firstUnlearned);
-        }
-      });
-  }, [unitId, indexParam]);
+    const firstUnlearned = words.findIndex(
+      (w: Word) => !learned.includes(w.word)
+    );
+    if (firstUnlearned !== -1) {
+      setCurrentIndex(firstUnlearned);
+    }
+  }, [words, indexParam]);
 
   const handleCheckAnswer = () => {
     const correct = checkAnswer(userInput, currentWord.word);
