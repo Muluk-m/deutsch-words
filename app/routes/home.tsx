@@ -1,6 +1,6 @@
 import type { Route } from "./+types/home";
 import { Link } from "react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { Word } from "../types/word";
 import {
   createUnits,
@@ -49,7 +49,7 @@ export default function Home() {
   const [dueCount, setDueCount] = useState(0);
   const [mistakesCount, setMistakesCount] = useState(0);
   const [selectedUnits, setSelectedUnits] = useState<number[] | null>(null);
-  const [isComposing, setIsComposing] = useState(false); // 跟踪输入法组合状态
+  const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (needsMigration()) {
@@ -83,11 +83,11 @@ export default function Home() {
       });
   }, []);
 
-  // 搜索功能 - 在输入法组合期间不触发搜索
+  // 搜索功能 - 使用 debounce 延迟搜索，避免输入法中间状态干扰
   useEffect(() => {
-    // 如果正在使用输入法组合，不进行搜索
-    if (isComposing) {
-      return;
+    // 清除之前的定时器
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
     if (!searchQuery.trim()) {
@@ -96,37 +96,48 @@ export default function Home() {
       return;
     }
 
+    // 显示搜索状态
     setIsSearching(true);
-    const query = searchQuery.toLowerCase().trim();
 
-    const matchedWords: Array<{
-      word: Word;
-      index: number;
-      unitId: number;
-      globalIndex: number;
-    }> = [];
+    // 延迟执行搜索，等待输入法完成
+    searchTimeoutRef.current = setTimeout(() => {
+      const query = searchQuery.toLowerCase().trim();
 
-    words.forEach((word, globalIndex) => {
-      const matches =
-        word.word.toLowerCase().includes(query) ||
-        word.zh_cn.toLowerCase().includes(query);
+      const matchedWords: Array<{
+        word: Word;
+        index: number;
+        unitId: number;
+        globalIndex: number;
+      }> = [];
 
-      if (matches) {
-        const unitId = word.unitId || 1;
-        const unitWords = words.filter((w) => (w.unitId || 1) === unitId);
-        const indexInUnit = unitWords.findIndex((w) => w.word === word.word);
+      words.forEach((word, globalIndex) => {
+        const matches =
+          word.word.toLowerCase().includes(query) ||
+          word.zh_cn.toLowerCase().includes(query);
 
-        matchedWords.push({
-          word,
-          index: indexInUnit,
-          unitId,
-          globalIndex,
-        });
+        if (matches) {
+          const unitId = word.unitId || 1;
+          const unitWords = words.filter((w) => (w.unitId || 1) === unitId);
+          const indexInUnit = unitWords.findIndex((w) => w.word === word.word);
+
+          matchedWords.push({
+            word,
+            index: indexInUnit,
+            unitId,
+            globalIndex,
+          });
+        }
+      });
+
+      setSearchResults(matchedWords.slice(0, 20));
+    }, 150);
+
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    });
-
-    setSearchResults(matchedWords.slice(0, 20));
-  }, [searchQuery, words, isComposing]);
+    };
+  }, [searchQuery, words]);
 
   const units = createUnits(words);
   const unitList = getUnitList(words);
@@ -182,12 +193,6 @@ export default function Home() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={(e) => {
-                setIsComposing(false);
-                // 组合结束时，确保使用最终的值进行搜索
-                setSearchQuery((e.target as HTMLInputElement).value);
-              }}
               placeholder="搜索单词..."
               className="w-full h-10 pl-10 pr-10 bg-gray-100 dark:bg-gray-800 border-0 rounded-xl text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
             />
