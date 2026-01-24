@@ -1,7 +1,7 @@
 // Deutsche Drill Service Worker
-const CACHE_NAME = 'deutsche-drill-v1';
-const STATIC_CACHE = 'deutsche-drill-static-v1';
-const DYNAMIC_CACHE = 'deutsche-drill-dynamic-v1';
+const CACHE_NAME = 'deutsche-drill-v2';
+const STATIC_CACHE = 'deutsche-drill-static-v2';
+const DYNAMIC_CACHE = 'deutsche-drill-dynamic-v2';
 
 // 静态资源列表 - 核心应用资源
 const STATIC_ASSETS = [
@@ -25,6 +25,13 @@ self.addEventListener('install', (event) => {
   );
   // 立即激活新的 Service Worker
   self.skipWaiting();
+});
+
+// 监听来自客户端的消息
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 // 激活 Service Worker

@@ -95,6 +95,11 @@ export default function App() {
           .then((registration) => {
             console.log("[PWA] Service Worker registered:", registration.scope);
 
+            // 定期检查更新（每小时一次）
+            setInterval(() => {
+              registration.update();
+            }, 60 * 60 * 1000);
+
             // 检查更新
             registration.addEventListener("updatefound", () => {
               const newWorker = registration.installing;
@@ -104,8 +109,9 @@ export default function App() {
                     newWorker.state === "installed" &&
                     navigator.serviceWorker.controller
                   ) {
-                    // 新版本已安装，可以提示用户刷新
-                    console.log("[PWA] New version available!");
+                    // 新版本已安装，通知新 worker 跳过等待并激活
+                    console.log("[PWA] New version available! Activating...");
+                    newWorker.postMessage({ type: "SKIP_WAITING" });
                   }
                 });
               }
@@ -114,6 +120,16 @@ export default function App() {
           .catch((error) => {
             console.error("[PWA] Service Worker registration failed:", error);
           });
+
+        // 监听 Service Worker 的控制器变化
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", () => {
+          if (!refreshing) {
+            refreshing = true;
+            console.log("[PWA] New Service Worker activated, reloading...");
+            window.location.reload();
+          }
+        });
       }
     }
   }, []);
